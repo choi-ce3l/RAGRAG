@@ -1,0 +1,8 @@
+골드셋 로드: B=694 A=103 (0.0s)
+resolver 상태 구축: 0.9s
+[1] parse 진단 완료 1.3s -> {"fact_numeric": 1.0, "dual": 1.0, "compute": 1.0, "comparison": 1.0}
+[2] 층B 라우팅 채점 완료 48.9s -> {'n': 694, 'pass': 694, 'strict_pass': 694, 'router_route_vs_frame_intent_mismatch': 0, 'n_changed_vs_unfiltered_numqa': 0}
+[3] 층A comparison 라우팅 완료 11.5s -> {'n': 103, 'routed_comparison': 103, 'solved_ok': 102, 'used_restatement_fallback': 87}
+[4] USE_LOCAL_LLM!=1 — 스킵
+전체 소요 62.6s
+

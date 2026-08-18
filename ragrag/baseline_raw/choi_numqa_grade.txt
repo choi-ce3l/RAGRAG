@@ -1,0 +1,33 @@
+{
+  "slices": {
+    "fact_numeric": {
+      "n": 527,
+      "pass": 527,
+      "strict_pass": 527,
+      "unparsed": 0,
+      "no_fact": 0
+    },
+    "dual": {
+      "n": 68,
+      "pass": 68,
+      "strict_pass": 68,
+      "unparsed": 0,
+      "no_fact": 0
+    },
+    "compute": {
+      "n": 99,
+      "pass": 99,
+      "strict_pass": 99,
+      "unparsed": 0,
+      "no_fact": 0
+    }
+  },
+  "total": {
+    "n": 694,
+    "pass": 694,
+    "strict_pass": 694,
+    "unparsed": 0,
+    "no_fact": 0
+  }
+}
+

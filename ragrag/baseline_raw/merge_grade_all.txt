@@ -1,0 +1,24 @@
+[load] xbrl fact 16,370 · shareholders 4,342
+{
+  "layerB": {
+    "n": 694,
+    "pass": 694,
+    "strict_pass": 694,
+    "unparsed": 0,
+    "no_fact": 0
+  },
+  "layerC": {
+    "by_slice": {
+      "ratio": "48/48",
+      "major": "135/135",
+      "exchange": "76/76"
+    },
+    "total": "259/259",
+    "route": {
+      "xbrl": 48,
+      "struct": 211
+    }
+  },
+  "regression_pass": 8
+}
+
