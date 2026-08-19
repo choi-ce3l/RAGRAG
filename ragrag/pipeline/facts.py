@@ -33,6 +33,13 @@ _CORE_PREFIXES = ("BS", "IS", "CF", "EF")   # 재무상태/손익·포괄손익/
 
 # TABLE-GROUP 스팬. 핵심FS 그룹은 내부에 다른 TABLE-GROUP을 품지 않으므로 non-greedy로 충분.
 _TG_RE = re.compile(r'<TABLE-GROUP\b[^>]*ACLASS="\{XBRL\}([A-Za-z0-9_]+)"[^>]*>(.*?)</TABLE-GROUP>', re.S)
+# Cycle 5(B, H-DATA-007) 신규 — 지분율(BSH_SPCL)은 {XBRL} 접두어가 없는 TABLE-GROUP이라 위 _TG_RE에
+# 애초에 매치되지 않는다. 기존 _TG_RE/extract_facts()는 건드리지 않고 별도의 좁은 정규식만 추가한다.
+_TG_PLAIN_RE = re.compile(r'<TABLE-GROUP\b[^>]*ACLASS="([A-Za-z0-9_]+)"[^>]*>(.*?)</TABLE-GROUP>', re.S)
+_BASE_DATE_RE = re.compile(r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일')
+# relation 표기가 회사마다 다름(대우="최대주주", 삼성="최대주주 본인") — 완전 일치 alias로만 매칭
+# (부분 문자열 매칭 금지, RULE-ALIAS-01과 동일 원칙).
+_MAJOR_HOLDER_RELATIONS = ["최대주주", "최대주주 본인"]
 # 메타표의 기수→기간: "제 57 기 2025.01.01 부터 2025.12.31 까지" / "제 57 기말 2025.12.31 현재"
 _TERM_RE = re.compile(
     r'제\s*(\d+)\s*기말?\s*(\d{4})\.(\d{2})\.(\d{2})(?:\s*부터\s*(\d{4})\.(\d{2})\.(\d{2})\s*까지)?')
@@ -198,6 +205,80 @@ def extract_facts(entry, sup_info=None):
     return facts
 
 
+def extract_shareholders(entry, sup_info=None):
+    """periodic 문서 1건 -> list[shareholder record]. BSH_SPCL(주주에 관한 사항) 표만.
+
+    Cycle 5(B, H-DATA-007) 신규. extract_facts()와 별개 함수 — 스키마가 metric-value 1쌍이
+    아니라 (성명/관계/지분율) 구조라 FactStore.idx의 (corp,metric,scope,statement,year) 키와
+    안 맞는다(DATA 설계 그대로). 표 헤더 3행(성명|관계|주식의종류|소유주식수및지분율|비고 /
+    기초|기말 / 주식수|지분율|주식수|지분율) 스킵 후 데이터 행만 행 길이(len(row))로 4가지
+    케이스 분기(일반 8열 / 계 7열 / 우선주계속 6열, 그 외는 skip). 대우건설·삼성전자 raw XML
+    실측(Moderator 지시로 재확인)으로 구조 확정.
+    """
+    path = load.main_xml_path(entry)
+    if not path or entry.get("file_format") != "xml":
+        return []
+    raw = load.read_text(path)
+    doc_id = f"{entry['doc_group']}_{entry['rcept_no']}"
+    corp_name = unicodedata.normalize("NFC", entry["corp_name"])
+    is_superseded = bool((sup_info or {}).get("is_superseded", False))
+
+    records = []
+    for m in _TG_PLAIN_RE.finditer(raw):
+        code, inner = m.group(1), m.group(2)
+        if code != "BSH_SPCL":
+            continue
+        root = etree.fromstring(("<ROOT>" + inner + "</ROOT>").encode("utf-8"),
+                                etree.XMLParser(recover=True, huge_tree=True))
+        tables = [t for t in root.iter() if isinstance(t.tag, str) and t.tag.lower() == "table"]
+        matrices = [_matrix_of(t) for t in tables]
+        matrices = [mm for mm in matrices if mm]
+        if not matrices:
+            continue
+        group_text = " ".join(c for mm in matrices for r in mm for c in r)
+        bd = _BASE_DATE_RE.search(group_text)
+        base_year = int(bd.group(1)) if bd else entry.get("base_year")
+
+        # 데이터표 = 헤더 첫 셀이 "성 명"인 표(표(기준일:...) 캡션 표와 구분).
+        data = next((mm for mm in matrices if mm and mm[0] and mm[0][0].strip() == "성 명"), None)
+        if not data:
+            continue
+
+        cur_holder = None   # '우선주' 합계 속행 행(6열)이 직전 '계' 행(7열)의 성명을 물려받음
+        for r, row in enumerate(data[3:], start=3):   # 헤더 3행 스킵
+            n = len(row)
+            if n == 8:
+                holder, relation, share_type, s_open, p_open, s_close, p_close, remark = row
+                is_total = False
+                cur_holder = holder
+            elif n == 7:                              # 계(합계) 행 — "관계" 칸 없음
+                holder, share_type, s_open, p_open, s_close, p_close, remark = row
+                relation = None
+                is_total = True
+                cur_holder = holder
+            elif n == 6:                               # 우선주 합계 속행 행 — 성명/관계 통째로 없음
+                share_type, s_open, p_open, s_close, p_close, remark = row
+                holder = cur_holder or "계"
+                relation = None
+                is_total = True
+            else:
+                continue                                # 예상 밖 행 길이는 조용히 skip(F-DATA-015 주의사항)
+            records.append({
+                "fact_id": f"{doc_id}:BSH_SPCL:r{r}",
+                "corp_code": entry["corp_code"], "corp_name": corp_name,
+                "rcept_no": entry["rcept_no"], "doc_id": doc_id,
+                "row_index": r,
+                "holder_name": unicodedata.normalize("NFC", holder.strip()),
+                "relation": unicodedata.normalize("NFC", relation.strip()) if relation else None,
+                "share_type": share_type.strip(),
+                "shares_open": s_open.strip(), "pct_open": p_open.strip(),
+                "shares_close": s_close.strip(), "pct_close": p_close.strip(),
+                "base_year": base_year, "remark": remark.strip(),
+                "is_total": is_total, "is_superseded": is_superseded,
+            })
+    return records
+
+
 # ---------------------------------------------------------------------------
 # 조회/계산 인터페이스 (16번 함수 계약)
 # ---------------------------------------------------------------------------
@@ -233,6 +314,35 @@ def lookup_fact(facts, metric_key, scope=None, base_year=None, corp_code=None,
 
 def get_fact(facts_by_id, fact_id):
     return facts_by_id.get(fact_id)
+
+
+def lookup_shareholder(records, corp_code, base_year, kind="major", include_superseded=False):
+    """records(extract_shareholders 출력)에서 (corp_code, base_year) 지분율 lookup.
+
+    kind="major": relation이 _MAJOR_HOLDER_RELATIONS에 속하고 share_type="보통주"인 행
+      (단독 지분율). 삼성전자처럼 같은 relation("최대주주 본인")이 본인 소유주 외에
+      "(특별계정)" 같은 부속 계좌 행에도 붙는 경우가 있어, share_type="보통주" 조건까지
+      같이 걸고 표에 가장 먼저 등장하는 행(row_index 최소)을 채택한다 — 부속 계좌보다
+      원 소유주 행이 항상 먼저 나옴(raw XML 실측).
+    kind="total": is_total=True이고 share_type="보통주"인 행(합산 지분율, 표의 '계' 행을
+      그대로 읽음 — compute() 호출 불필요).
+    복수 rcept_no 문서가 같은 base_year를 가지면 최신 문서(rcept_no 최댓값)를 우선한다.
+    """
+    cands = [r for r in records if r["corp_code"] == corp_code and r["base_year"] == base_year
+             and (include_superseded or not r["is_superseded"])]
+    if kind == "major":
+        cands = [r for r in cands
+                 if r.get("relation") in _MAJOR_HOLDER_RELATIONS and r.get("share_type") == "보통주"]
+    elif kind == "total":
+        cands = [r for r in cands if r.get("is_total") and r.get("share_type") == "보통주"]
+    else:
+        raise ValueError(f"unknown kind: {kind}")
+    if not cands:
+        return None
+    latest_rcept = max(r["rcept_no"] for r in cands)
+    same_doc = [r for r in cands if r["rcept_no"] == latest_rcept]
+    same_doc.sort(key=lambda r: r["row_index"])
+    return same_doc[0]
 
 
 # 공식 registry — Decimal 계산. 입력은 원천 fact(값+원천ID). LLM 불개입(가드레일).
@@ -290,10 +400,45 @@ def build(manifest=None):
             "n_corps": len(corps), "n_facts": n_fact, "n_err": n_err}
 
 
+def build_shareholders(manifest=None):
+    """periodic 사업보고서 전체 -> out/shareholders.jsonl. Cycle 5(B) 신규.
+
+    facts.jsonl(extract_facts, 기존 파이프라인)과 별개 파일로 둔다 — choi 원본 파이프라인이나
+    기존 facts.jsonl 생성 경로는 전혀 건드리지 않음(회귀 위험 최소화).
+    """
+    manifest = manifest or load.load_manifest()
+    smap = supersede.build_supersede_map(manifest)
+    targets = [e for e in manifest
+               if e["doc_group"] == "periodic"
+               and "사업보고서" in (e.get("report_nm") or "")
+               and e.get("file_format") == "xml"]
+    os.makedirs(OUT_DIR, exist_ok=True)
+    n_rec = n_doc = n_err = 0
+    corps = set()
+    with open(os.path.join(OUT_DIR, "shareholders.jsonl"), "w", encoding="utf-8") as fo:
+        for e in targets:
+            try:
+                rs = extract_shareholders(e, smap.get(f"periodic_{e['rcept_no']}"))
+            except Exception:  # noqa: BLE001
+                n_err += 1
+                continue
+            for r in rs:
+                fo.write(json.dumps(r, ensure_ascii=False) + "\n")
+            if rs:
+                n_doc += 1
+                corps.add(e["corp_name"])
+            n_rec += len(rs)
+    return {"n_target_docs": len(targets), "n_docs_with_records": n_doc,
+            "n_corps": len(corps), "n_records": n_rec, "n_err": n_err}
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "build":
         summary = build()
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+    elif len(sys.argv) > 1 and sys.argv[1] == "build_shareholders":
+        summary = build_shareholders()
         print(json.dumps(summary, ensure_ascii=False, indent=2))
     elif len(sys.argv) > 1:
         man = load.load_manifest()

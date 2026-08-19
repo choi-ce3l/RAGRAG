@@ -346,3 +346,163 @@ $ conda run -n RAGRAG python3 -m ragrag.router.diagnose   (레포 루트에서, 
 ### 상태: **Step 3 게이트 통과**. `ragrag/router/`(9개 파일 + prompts) 커밋 진행.
 Step 4(numqa MERGE 교체 + comparison 재연결 + 엄격 게이트 전환)는 아직 시작하지 않음 —
 사용자 지시 대기.
+
+## Step 4-a — numqa를 MERGE 병합본으로 교체 (2026-08-19)
+
+### 옮긴 파일
+
+`data/MERGE/src/numqa.py`(632줄)로 `ragrag/pipeline/numqa.py`(choi 원본 353줄)를 **교체**.
+router 쪽(`ragrag/router/`)은 이 단계에서 손대지 않음(지시대로 4-b 몫).
+
+### 가한 변경 — 허용 변경 2종만
+
+`diff data/MERGE/src/numqa.py ragrag/pipeline/numqa.py` 실행 — 변경은 정확히 2곳:
+1. `import facts as FA` / `import load`(bare) → `from . import facts as FA` / `from . import load`
+2. `GOLD_DIR = os.path.join(_HERE, "..", "goldset_layerB")` →
+   `os.path.join(_HERE, "..", "goldsets", "layerB")`(Step 2에서 확립한 경로 재계산 패턴과 동일)
+
+`_OUT = os.path.join(_HERE, "..", "out")`는 무변경 — Step 2 때와 같은 이유로(이식 위치가
+`ragrag/pipeline/`이라 `_HERE`에서 1단계 위가 정확히 `ragrag/out/`을 가리켜 공식 자체가
+자동으로 맞음). 그 외 채점 로직·라우팅·문장 조립·resolver 호출 등은 전부 원문과 100% 동일.
+
+### 회귀 결과 — 정본 게이트 항목은 전부 통과
+
+```
+$ conda run -n RAGRAG python3 ragrag/eval/grade_all.py       (레포 루트, API 미사용)
+$ conda run -n RAGRAG python3 -m ragrag.pipeline.numqa grade
+```
+
+- **층B**: 694/694(엄격 694/694) — BASELINE ②·정본 게이트와 정확히 일치. `numqa.py grade`
+  자체 CLI로 재확인해도 동일(694/694)
+- **층C**: 259/259 (ratio 48/48 · major 135/135 · exchange 76/76, 라우팅 {xbrl: 48, struct: 211}) —
+  BASELINE ②와 정확히 일치. Step 2~3에서 이연했던 게이트가 여기서 정확히 복귀함
+- **층A**: 느슨(any_hit) **103/103** · 엄격(all_hit AND verdict_ok) **94/103** — BASELINE ②와
+  정확히 일치
+
+MIGRATION_LOG 문제 #3의 `AttributeError: 'FactStore' object has no attribute 'shareholders'`는
+해소됨(MERGE `FactStore.__init__`이 `shareholders` 속성을 항상 갖도록 정의돼 있음) — 크래시 없이
+`grade_all.py`가 완주했다.
+
+### 발견한 문제 (수정하지 않고 기록 — §3-2 매핑표에 없는 런타임 데이터 의존, 사용자 판단 필요)
+
+5. **`SHAREHOLDERS_PATH`/`FILINGS_PATH` — §3-2 매핑표가 다루지 않은 런타임 데이터 의존.**
+   MERGE `numqa.py`는 `_resolve()`로 `ragrag/out/`(choi `out/`을 가리키는 Step 2의 심링크) 아래에서
+   `shareholders.jsonl`·`filings.jsonl`을 찾는다. 두 파일 다 choi의 `out/`에는 없다(직접 확인) —
+   실제 원본은 `data/MERGE/out/`에 있고, 그 디렉터리 자체가 `filings.jsonl`(MERGE가 직접 생성한
+   실파일)과 `shareholders.jsonl`(→`SHLEE/AGENT/04_FUNCTION_DESIGNER/numqa_local/out/shareholders.jsonl`
+   심링크)을 별도로 갖춘 자체 `out/`이다. `ragrag/out/`은 Step 2에서 choi `out/` 하나만 가리키는
+   단순 심링크로 만들어졌으므로(§3-2 pipeline 표에 이 두 파일이 언급되지 않음) 이 둘을 못 찾는다.
+   - **실측 영향 — 정본 게이트는 무관, 참고용 회귀에서만 차이 발생**:
+     - `shareholders.jsonl` 부재 → `store.shareholders`가 빈 리스트(`[load] xbrl fact 16,370 ·
+       shareholders 0`, 정상이면 0이 아닐 것으로 추정). `grade_all.py`의 `REGRESSION`(8건,
+       BASELINE에서 8/8 PASS로 "참고용, 게이트 아님"이라 명시된 항목)이 이번엔 **6/8**로 나옴 —
+       실패 2건은 정확히 shareholder_lookup 의존 문항(`대우_Q5_최대주주`, `삼성_Q4_지분율`, 둘 다
+       `status: narrative`로 응답 자체를 못 만듦). 층B/층C/층A(느슨·엄격) 등 **정본 게이트 4개
+       수치는 전부 BASELINE과 정확히 일치**하므로 이 결손이 게이트 자체를 흔들지는 않았다.
+     - `filings.jsonl` 부재는 영향 없음(확인 완료): `_load_filings()`가 파일 부재 시
+       `load.load_manifest()`로 자동 폴백하도록 이미 짜여 있고(MERGE 원본 코드, 무변경), 층C
+       `struct` 라우팅 211/211 전부 정상 처리된 것으로 폴백이 문제없이 작동함을 확인.
+   - **처리하지 않고 여기서 멈춘 이유**: 이번 태스크 지시가 "매핑표에 없는 의존이 나오면 임의로
+     경로를 정하지 말고 중단·보고"를 명시했고, `shareholders 데이터 경로`를 그 예시로 직접
+     지목했다 — 지금 상황과 정확히 일치. `ragrag/out/`을 어떻게 확장할지(예: `data/MERGE/out/`처럼
+     개별 파일 단위 심링크 구조로 바꿀지, `shareholders.jsonl`만 `SHLEE/.../numqa_local/out/`에서
+     직접 심링크할지, 아니면 이 결손을 "참고용 회귀 한정 결함"으로 수용하고 그대로 둘지)는
+     구조 결정이라 임의로 고르지 않았다.
+   - 커밋은 이 판단이 내려질 때까지 보류.
+
+### 문제 #5 처리 (2026-08-19, 사용자 승인) — `ragrag/out/` 구조를 개별 심링크로 전환
+
+사용자가 "심링크 추가"를 선택. `ragrag/out`을 Step 2의 단일 디렉터리 심링크(→
+`choi/code_chunkingandparsing/out`, 커밋 `b74d20f`)에서 `data/MERGE/out/`과 동일한
+방식(개별 파일 단위 심링크)으로 재구성했다 — §3-3이 이미 이 선례를 "같은 방식을 그대로
+따를 것을 제안"한다고 명시했으므로 구조 자체는 계획 안의 방식.
+
+- 제거: `ragrag/out`(디렉터리 심링크, mode 120000)
+- 신설: `ragrag/out/`(실디렉터리) 안에 파일별 심링크 10개
+  - choi `out/` 기존 8종(`chunks.jsonl`/`errors.jsonl`/`facts.jsonl`/`factstore.jsonl`/
+    `factx.jsonl`/`factx_periodic.jsonl`/`summary.json`/`tables.jsonl`) → 전과 동일 대상,
+    개별 심링크로만 전환(내용 접근성 무변화)
+  - **신규** `shareholders.jsonl` → `SHLEE/AGENT/04_FUNCTION_DESIGNER/numqa_local/out/shareholders.jsonl`
+    (`data/MERGE/out/shareholders.jsonl`과 동일 대상)
+  - **신규** `filings.jsonl` → `data/MERGE/out/filings.jsonl`(MERGE가 직접 생성한 실파일 —
+    choi/SHLEE 어느 쪽에도 없음, `data/MERGE/out/`을 읽기 전용으로 참조만 함)
+
+재검증: `[load] xbrl fact 16,370 · shareholders 4,342`(이전 실행의 `shareholders 0`에서 정상
+로드로 전환 확인) · 층B 694/694·층C 259/259 **무변화**(심링크 추가가 기존 로직에 부작용 없음
+확인).
+
+### 문제 #6 (신규 발견, 수정하지 않고 기록 — §3-2 매핑표와 실제 코드 의존이 상충)
+
+`shareholders.jsonl` 심링크 추가 후 재실행하니 `regression_pass`가 여전히 6/8 — 실패한 2건
+(`대우_Q5_최대주주`, `삼성_Q4_지분율`)이 이번엔 "narrative"가 아니라 **`CRASH`**로 바뀌었다:
+
+```
+AttributeError: module 'ragrag.pipeline.facts' has no attribute 'lookup_shareholder'
+```
+
+원인 확인: `ragrag/pipeline/numqa.py`(Step 4-a에서 MERGE 병합본으로 교체됨)의
+`answer()`가 `FA.lookup_shareholder(store.shareholders, cc, eff_year, kind=kind)`를 호출하는데
+(`FA` = `ragrag.pipeline.facts`), 이 함수는 **choi 원본 `facts.py`에는 없고
+`data/MERGE/src/facts.py`에만 있다**(`diff choi/.../src/facts.py data/MERGE/src/facts.py`로
+직접 확인 — `extract_shareholders`/`lookup_shareholder`/`build_shareholders` 3개 함수 +
+관련 정규식·상수가 MERGE판에만 존재, 약 130줄 추가분).
+
+이것은 §3-2 매핑표와 실제 코드 의존이 정면으로 상충하는 지점이다: 매핑표는
+`choi/.../src/facts.py` → `ragrag/pipeline/facts.py`를 "상대import 전환만 | 로직 변경 없음"
+(즉 choi 원본 유지)이라 명시했는데, 같은 매핑표가 지시한 "`numqa.py`는 `data/MERGE`판으로
+교체"를 실행하면 그 `numqa.py`가 **매핑표가 그대로 두라고 한 `facts.py`의 함수를 호출해서
+크래시**한다. Step 4-a 태스크 지시의 "MERGE numqa가 참조하는 데이터/모듈 의존이 있으면
+매핑표에 따라 함께 이식... 매핑표에 없는 의존이 나오면 임의로 경로를 정하지 말고 중단·보고"
+원칙에 해당 — 이번엔 데이터 파일이 아니라 **소스 코드(facts.py 자체)** 수준의 누락이라
+임의로 `facts.py`도 MERGE판으로 바꿔치기하지 않고 여기서 멈춘다(그 판단은 numqa.py 교체보다
+범위가 커서 사용자 승인 없이 결정할 사안이 아니라고 판단).
+
+- **영향 범위**: 정본 게이트(층B 694/694·층C 259/259·층A 느슨 103/103·엄격 94/103) 전부
+  이 크래시와 무관하게 그대로 유지됨(재확인 완료) — `_store_answer()`가 예외를 잡지 않고
+  전파하는 게 아니라 `grade_regression()`의 `try/except`가 개별 문항 단위로 크래시를 흡수하기
+  때문에 다른 채점에 전이되지 않는다. 오직 `REGRESSION`(참고용 8건 표) 중 shareholder_lookup
+  의존 2건만 "narrative"였다가 "CRASH"로 바뀌었을 뿐 — 두 상태 모두 애초에 FAIL이었으므로
+  `regression_pass` 수치(6/8) 자체는 심링크 전후로 동일하다.
+- **선택지(결정 안 함)**: (a) `facts.py`도 `data/MERGE/src/facts.py`로 교체(매핑표 이 항목을
+  실질적으로 갱신하는 셈), (b) 참고용 회귀 8건 중 이 2건을 "Step 4 시점엔 알려진 결함"으로
+  기록하고 그대로 둠(정본 게이트 무관이므로), (c) 다른 방안. 사용자 판단 필요.
+
+### 문제 #6 처리 (2026-08-19, 사용자 승인) — `facts.py`도 MERGE판으로 교체
+
+사용자가 "facts.py도 MERGE판으로 교체"를 선택. `ragrag/pipeline/facts.py`를
+`data/MERGE/src/facts.py`로 교체(choi 원본 `facts.py`는 대체됨) — numqa.py와 동일한 허용
+변경 2종만 적용:
+
+- `import load` / `import supersede`(bare) → `from . import load` / `from . import supersede`
+- `OUT_DIR = os.path.join(_HERE, "..", "out")`는 numqa.py의 `_OUT`과 같은 이유로 무변경
+
+`diff data/MERGE/src/facts.py ragrag/pipeline/facts.py` — 위 import 2줄 외 차이 없음 확인.
+`diff choi/.../src/facts.py data/MERGE/src/facts.py`는 이미 위 문제 #6에서 확인한 대로 전부
+**추가(addition)뿐**(`extract_shareholders`/`lookup_shareholder`/`build_shareholders` + 관련
+상수·정규식, 약 130줄) — choi 원본 함수(`_ONTOLOGY`/`compute`/`load_facts`/`extract_facts` 등)는
+단 한 줄도 삭제·수정되지 않았음을 재확인. 따라서 `facts.py`를 참조하는 다른 5개 파일
+(`factx.py`/`gen_goldB.py`/`build_verify_ui.py`/`router/vocab.py`/`router/execute.py`)이 쓰는
+choi 원본 함수는 전부 그대로 남아 있어 이 교체로 깨질 이유가 없음 — 실제로
+`ragrag.pipeline.*`/`ragrag.router.*` 전 모듈 import 스모크테스트로 재확인(전부 정상 import).
+
+### 회귀 결과 — 게이트 통과, 참고용 회귀까지 완전 일치
+
+```
+$ conda run -n RAGRAG python3 ragrag/eval/grade_all.py
+$ conda run -n RAGRAG python3 -m ragrag.pipeline.numqa grade
+```
+
+- `[load] xbrl fact 16,370 · shareholders 4,342`
+- **층B**: 694/694(엄격 694/694) — `numqa.py grade` 자체 CLI로도 재확인
+- **층C**: 259/259(ratio 48/48·major 135/135·exchange 76/76, 라우팅 {xbrl: 48, struct: 211})
+- **층A**: 느슨 103/103 · 엄격 94/103
+- **손검증 회귀(참고용 8건)**: **8/8 PASS**(문제 #6 해결 전 6/8이었던 것이 완전히 회복 —
+  BASELINE ②의 8/8과 정확히 일치)
+
+정본 게이트 4개 수치 전부 BASELINE과 정확히 일치, 참고용 항목까지 완전히 재현되어 더 이상
+열린 문제가 없다.
+
+### 상태: **Step 4-a 게이트 완전 통과**(정본 게이트 4개 + 참고용 회귀 8/8 전부 BASELINE과
+일치). `ragrag/pipeline/numqa.py`(MERGE 교체) · `ragrag/pipeline/facts.py`(MERGE 교체) ·
+`ragrag/out/`(개별 심링크 재구성, shareholders/filings 추가) 커밋 진행. Step 4-b(comparison
+재연결)로 이동.
