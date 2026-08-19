@@ -1,0 +1,11 @@
+{
+  "report": {
+    "n": 694,
+    "pass": 694,
+    "strict_pass": 694,
+    "router_route_vs_frame_intent_mismatch": 0,
+    "n_changed_vs_unfiltered_numqa": 0
+  },
+  "fails": [],
+  "changed_vs_unfiltered": []
+}

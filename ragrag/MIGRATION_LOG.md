@@ -268,3 +268,81 @@ $ conda run -n RAGRAG python3 -m ragrag.pipeline.numqa grade   (레포 루트에
 - 이 결정으로 Step 2 게이트 = **층B 694/694 (엄격 694/694)만** — 이미 위에서 재현 확인 완료.
 
 ### 상태: **Step 2 게이트 통과(층B 694/694, 층C 제외 확정)**. 커밋 진행, Step 3(router 이식)으로 이동.
+
+## Step 3 — router 이식 (2026-08-19)
+
+### 옮긴 파일 (원본 경로 → 새 경로)
+
+§3-2 매핑표대로 `jin/router/*.py` 9개 전부를 `ragrag/router/`로 이식:
+
+| 원본 | 새 위치 |
+|---|---|
+| `jin/router/frame.py` | `ragrag/router/frame.py` (변경 없음 — diff 0) |
+| `jin/router/vocab.py` | `ragrag/router/vocab.py` |
+| `jin/router/parse.py` | **`ragrag/router/intent_parse.py`**(리네임) |
+| `jin/router/resolver.py` | `ragrag/router/resolver.py` |
+| `jin/router/router.py` | `ragrag/router/router.py` |
+| `jin/router/execute.py` | `ragrag/router/execute.py` |
+| `jin/router/compose.py` | `ragrag/router/compose.py` (변경 없음 — diff 0) |
+| `jin/router/llm_local.py` | `ragrag/router/llm_local.py` |
+| `jin/router/diagnose.py` | `ragrag/router/diagnose.py` |
+| `jin/router/prompts/*.txt` | `ragrag/router/prompts/`(변경 없음) |
+
+### 가한 변경 (파일별) — 허용 변경 2종 + 계획서에 명시된 리네임 1건만
+
+1. **`parse.py` → `intent_parse.py` 리네임**: choi `ragrag/pipeline/parse.py`(문서 XML 파서)와
+   이름이 겹쳐 원본(jin/router)에서는 `importlib.util.spec_from_file_location`으로 우회
+   바인딩하던 파일. `jin/INTEGRATION_PLAN.md` §2-2가 "통합 시 `intent_parse.py` 등으로
+   리네임해 근본적으로 제거할 것을 제안"이라 명시했고, `§4` Step 3 정의에도 동일 리네임이
+   지시되어 있어 그대로 적용.
+2. **`sys.path.insert(0, CHOI_SRC)` + bare `import facts/load/supersede/numqa` → 정식
+   패키지 import(`from ragrag.pipeline import ...`)**: `vocab.py`/`intent_parse.py`/
+   `resolver.py`/`execute.py`/`diagnose.py`/`llm_local.py`(narrative 지연 import) 전부.
+3. **jin/router 형제 모듈 간 bare import → 상대import**: `import frame`/`import vocab`/
+   `import resolver`/`import router`/`import execute`/`import compose`/`import intent_parse`
+   → `from . import ...`.
+4. **`importlib` 우회 로더 제거 → 정식 import로 대체**(1번 리네임의 직접 결과, 허용 변경
+   2종 중 "import 전환" 범위 안): `execute.py.__main__`의 `_load_intent_parser()`와
+   `diagnose.py`의 `_load_intent_parse()`가 하던 "bare `import parse`는 choi 문서 파서와
+   충돌하니 `router_intent_parse`라는 임시 이름으로 파일을 직접 로드" 우회를 제거하고
+   `from . import intent_parse as ip`로 교체. 근거: 리네임 + choi 쪽(`ragrag/pipeline/rag.py`)의
+   Step 2 상대import 전환으로 `ragrag.pipeline.parse`(문서 파서)와
+   `ragrag.router.intent_parse`(질문 파서)가 이제 서로 다른 정식 모듈 경로라 애초에 이름이
+   충돌할 수 없음 — 우회가 존재할 이유 자체가 없어졌다(동작은 정확히 동일, 메커니즘만 표준화).
+5. **하드코딩 경로를 새 위치 기준으로 재계산**: `diagnose.py`의 `_GOLD_B`/`_GOLD_A`를
+   `choi/code_chunkingandparsing/goldset_layerB|A`(원본) → `ragrag/goldsets/layerB|A`(Step 2
+   이식본)로 변경(Step 2에서 numqa.py 등에 이미 적용한 것과 동일 패턴). `_CHOI_SRC`
+   sys.path 계산 자체는 3번 변경으로 통째로 제거되어 무관해짐.
+6. **의도적으로 그대로 둔 것**: `llm_local.py`의 `_pick_testset_dir()`가 가리키는
+   `choi/code_chunkingandparsing/testset_samsung`·`testset` 경로는 손대지 않음 — testset은
+   §6 제외 대상이고(Step 2에서 `rag.py`의 동일 판단과 일관), 이 함수는 narrative 경로에서
+   `USE_LOCAL_LLM=1`일 때만 호출되어 이번 게이트(1~3절)와 무관.
+
+### diff 감사 결과
+
+`diff jin/router/<f>.py ragrag/router/<f 또는 리네임된 파일>` 9개 전부 실행 —
+`frame.py`/`compose.py`는 diff 0(완전 동일). 나머지 7개는 위 "가한 변경" 1~5번(+ 관련
+설명 docstring 갱신)에만 국한됨을 확인 — 조건문·계산식·상수(우선순위 점수, 슬롯 목록,
+정규식, resolver 로직 등)는 전부 원문과 100% 동일.
+
+### 회귀 결과 — 게이트 통과
+
+```
+$ conda run -n RAGRAG python3 -m ragrag.router.diagnose   (레포 루트에서, CLOVA API 미사용)
+```
+
+- **슬롯**: corp 797/797 · metric 797/797 · period_year 797/797 · **scope 729/729**
+  (intent_totals: fact_numeric 527 + dual 68 + compute 99 + comparison 103 = 797) —
+  BASELINE ③과 정확히 일치
+- **층B 라우팅**: 694/694 (엄격 694/694), `router_route_vs_frame_intent_mismatch` 0 —
+  BASELINE과 정확히 일치
+- **층A comparison**: `routed_comparison` 103/103 · **solved_ok 102/103** ·
+  `used_restatement_fallback` 87 — BASELINE과 정확히 일치
+- `numqa.py grade` 재실행: 694/694(엄격 694/694) — Step 2와 동일하게 재확인
+
+층C는 계획대로 이 게이트에서 제외(위 "층C 처리 방침 확정" 참고). `USE_LOCAL_LLM`
+미설정이라 4절(로컬 LLM 캘리브레이션)은 스킵 — CLOVA/Ollama API 호출 없음.
+
+### 상태: **Step 3 게이트 통과**. `ragrag/router/`(9개 파일 + prompts) 커밋 진행.
+Step 4(numqa MERGE 교체 + comparison 재연결 + 엄격 게이트 전환)는 아직 시작하지 않음 —
+사용자 지시 대기.

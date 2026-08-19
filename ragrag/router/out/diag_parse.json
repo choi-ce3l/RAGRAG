@@ -1,0 +1,57 @@
+{
+  "n_total": 797,
+  "slot_success_rate": {
+    "corp": 1.0,
+    "metric": 1.0,
+    "period_year": 1.0,
+    "scope": 1.0
+  },
+  "slot_counts": {
+    "corp": {
+      "ok": 797,
+      "total": 797
+    },
+    "metric": {
+      "ok": 797,
+      "total": 797
+    },
+    "period_year": {
+      "ok": 797,
+      "total": 797
+    },
+    "scope": {
+      "ok": 729,
+      "total": 729
+    }
+  },
+  "intent_match_rate_new": {
+    "fact_numeric": 1.0,
+    "dual": 1.0,
+    "compute": 1.0,
+    "comparison": 1.0
+  },
+  "intent_match_rate_old": {
+    "fact_numeric": 1.0,
+    "dual": 1.0,
+    "compute": 1.0,
+    "comparison": 1.0
+  },
+  "intent_totals": {
+    "fact_numeric": 527,
+    "dual": 68,
+    "compute": 99,
+    "comparison": 103
+  },
+  "corp_match_new": {
+    "true": 797
+  },
+  "corp_match_old": {
+    "true": 797
+  },
+  "confusion_expected_vs_new": {
+    "fact_numeric->fact_numeric": 527,
+    "dual->dual": 68,
+    "compute->compute": 99,
+    "comparison->comparison": 103
+  }
+}
