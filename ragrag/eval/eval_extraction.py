@@ -27,10 +27,10 @@ from decimal import Decimal
 from collections import Counter, defaultdict
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_HERE, "..", "pipeline"))
+sys.path.insert(0, os.path.join(_HERE, "..", ".."))
 
-import load
-import numqa
+from ragrag.pipeline import load
+from ragrag.pipeline import numqa
 
 REPORT = os.path.join(_HERE, "..", "report")
 # 경로/압축 해석은 numqa가 이미 해결해뒀으므로 그대로 재사용한다(중복 구현 금지).

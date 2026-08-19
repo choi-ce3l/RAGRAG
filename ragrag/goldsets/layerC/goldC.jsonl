@@ -1,0 +1,259 @@
+{"qid": "R1", "slice": "ratio", "question": "삼성전자의 2025년 부채비율은 얼마인가?", "must_contain": ["29.9%", "29.9%"], "gold": "29.9%"}
+{"qid": "R2", "slice": "ratio", "question": "LG이노텍의 2025년 부채비율은 얼마인가?", "must_contain": ["107%", "107%"], "gold": "107%"}
+{"qid": "R3", "slice": "ratio", "question": "기아의 2025년 부채비율은 얼마인가?", "must_contain": ["61.76%", "61.76%"], "gold": "61.76%"}
+{"qid": "R4", "slice": "ratio", "question": "현대모비스의 2025년 부채비율은 얼마인가?", "must_contain": ["43.05%", "43.05%"], "gold": "43.05%"}
+{"qid": "R5", "slice": "ratio", "question": "현대오토에버의 2025년 부채비율은 얼마인가?", "must_contain": ["92.3%", "92.3%"], "gold": "92.3%"}
+{"qid": "R6", "slice": "ratio", "question": "현대오토에버의 2025년 유동비율은 얼마인가?", "must_contain": ["173.9%", "173.9%"], "gold": "173.9%"}
+{"qid": "R7", "slice": "ratio", "question": "레인보우로보틱스의 2025년 유동비율은 얼마인가?", "must_contain": ["1265.8%", "1265.8%"], "gold": "1265.8%"}
+{"qid": "R8", "slice": "ratio", "question": "레인보우로보틱스의 2025년 부채비율은 얼마인가?", "must_contain": ["7.1%", "7.1%"], "gold": "7.1%"}
+{"qid": "R9", "slice": "ratio", "question": "두산로보틱스의 2025년 부채비율은 얼마인가?", "must_contain": ["14.57%", "14.57%"], "gold": "14.57%"}
+{"qid": "R10", "slice": "ratio", "question": "삼성SDI의 2025년 부채비율은 얼마인가?", "must_contain": ["79.28%", "79.28%"], "gold": "79.28%"}
+{"qid": "R11", "slice": "ratio", "question": "POSCO홀딩스의 2025년 부채비율은 얼마인가?", "must_contain": ["68.6%", "68.6%"], "gold": "68.6%"}
+{"qid": "R12", "slice": "ratio", "question": "세아베스틸지주의 2025년 부채비율은 얼마인가?", "must_contain": ["100.44%", "100.44%"], "gold": "100.44%"}
+{"qid": "R13", "slice": "ratio", "question": "현대제철의 2025년 부채비율은 얼마인가?", "must_contain": ["73.6%", "73.6%"], "gold": "73.6%"}
+{"qid": "R14", "slice": "ratio", "question": "NAVER의 2025년 부채비율은 얼마인가?", "must_contain": ["41.90%", "41.90%"], "gold": "41.90%"}
+{"qid": "R15", "slice": "ratio", "question": "카카오의 2025년 부채비율은 얼마인가?", "must_contain": ["82.49%", "82.49%"], "gold": "82.49%"}
+{"qid": "R16", "slice": "ratio", "question": "케이티의 2025년 부채비율은 얼마인가?", "must_contain": ["121%", "121%"], "gold": "121%"}
+{"qid": "R17", "slice": "ratio", "question": "LG유플러스의 2025년 부채비율은 얼마인가?", "must_contain": ["179.6%", "179.6%"], "gold": "179.6%"}
+{"qid": "R18", "slice": "ratio", "question": "LG유플러스의 2025년 유동비율은 얼마인가?", "must_contain": ["179.66%", "179.66%"], "gold": "179.66%"}
+{"qid": "R19", "slice": "ratio", "question": "NC의 2025년 부채비율은 얼마인가?", "must_contain": ["28.56%", "28.56%"], "gold": "28.56%"}
+{"qid": "R20", "slice": "ratio", "question": "시프트업의 2025년 부채비율은 얼마인가?", "must_contain": ["17.60%", "17.60%"], "gold": "17.60%"}
+{"qid": "R21", "slice": "ratio", "question": "시프트업의 2025년 유동비율은 얼마인가?", "must_contain": ["818.7%", "818.7%"], "gold": "818.7%"}
+{"qid": "R22", "slice": "ratio", "question": "크래프톤의 2025년 부채비율은 얼마인가?", "must_contain": ["31.3%", "31.3%"], "gold": "31.3%"}
+{"qid": "R23", "slice": "ratio", "question": "크래프톤의 2025년 유동비율은 얼마인가?", "must_contain": ["307.4%", "307.4%"], "gold": "307.4%"}
+{"qid": "R24", "slice": "ratio", "question": "HD현대중공업의 2025년 부채비율은 얼마인가?", "must_contain": ["180.07%", "180.07%"], "gold": "180.07%"}
+{"qid": "R25", "slice": "ratio", "question": "두산에너빌리티의 2025년 부채비율은 얼마인가?", "must_contain": ["129.10%", "129.10%"], "gold": "129.10%"}
+{"qid": "R26", "slice": "ratio", "question": "두산에너빌리티의 2025년 유동비율은 얼마인가?", "must_contain": ["106.58%", "106.58%"], "gold": "106.58%"}
+{"qid": "R27", "slice": "ratio", "question": "한전기술의 2025년 유동비율은 얼마인가?", "must_contain": ["214.7%", "214.7%"], "gold": "214.7%"}
+{"qid": "R28", "slice": "ratio", "question": "한전기술의 2025년 부채비율은 얼마인가?", "must_contain": ["41.7%", "41.7%"], "gold": "41.7%"}
+{"qid": "R29", "slice": "ratio", "question": "우리기술의 2025년 부채비율은 얼마인가?", "must_contain": ["172.08%", "172.08%"], "gold": "172.08%"}
+{"qid": "R30", "slice": "ratio", "question": "현대로템의 2025년 부채비율은 얼마인가?", "must_contain": ["206.39%", "206.39%"], "gold": "206.39%"}
+{"qid": "R31", "slice": "ratio", "question": "한국항공우주의 2025년 부채비율은 얼마인가?", "must_contain": ["446.57%", "446.57%"], "gold": "446.57%"}
+{"qid": "R32", "slice": "ratio", "question": "현대건설의 2025년 유동비율은 얼마인가?", "must_contain": ["147.9%", "147.9%"], "gold": "147.9%"}
+{"qid": "R33", "slice": "ratio", "question": "현대건설의 2025년 부채비율은 얼마인가?", "must_contain": ["174.8%", "174.8%"], "gold": "174.8%"}
+{"qid": "R34", "slice": "ratio", "question": "대우건설의 2025년 부채비율은 얼마인가?", "must_contain": ["284.5%", "284.5%"], "gold": "284.5%"}
+{"qid": "R35", "slice": "ratio", "question": "대우건설의 2025년 유동비율은 얼마인가?", "must_contain": ["194.1%", "194.1%"], "gold": "194.1%"}
+{"qid": "R36", "slice": "ratio", "question": "삼성E&A의 2025년 부채비율은 얼마인가?", "must_contain": ["125.80%", "125.80%"], "gold": "125.80%"}
+{"qid": "R37", "slice": "ratio", "question": "HMM의 2025년 부채비율은 얼마인가?", "must_contain": ["26.31%", "26.31%"], "gold": "26.31%"}
+{"qid": "R38", "slice": "ratio", "question": "효성중공업의 2025년 부채비율은 얼마인가?", "must_contain": ["190%", "190%"], "gold": "190%"}
+{"qid": "R39", "slice": "ratio", "question": "효성중공업의 2025년 유동비율은 얼마인가?", "must_contain": ["104.96%", "104.96%"], "gold": "104.96%"}
+{"qid": "R40", "slice": "ratio", "question": "HD현대일렉트릭의 2025년 부채비율은 얼마인가?", "must_contain": ["134.63%", "134.63%"], "gold": "134.63%"}
+{"qid": "R41", "slice": "ratio", "question": "HD현대일렉트릭의 2025년 유동비율은 얼마인가?", "must_contain": ["134.4%", "134.4%"], "gold": "134.4%"}
+{"qid": "R42", "slice": "ratio", "question": "엘에스일렉트릭의 2025년 부채비율은 얼마인가?", "must_contain": ["131.48%", "131.48%"], "gold": "131.48%"}
+{"qid": "R43", "slice": "ratio", "question": "두산퓨얼셀의 2025년 부채비율은 얼마인가?", "must_contain": ["226.12%", "226.12%"], "gold": "226.12%"}
+{"qid": "R44", "slice": "ratio", "question": "OCI홀딩스의 2025년 부채비율은 얼마인가?", "must_contain": ["66.3%", "66.3%"], "gold": "66.3%"}
+{"qid": "R45", "slice": "ratio", "question": "JYP Ent의 2025년 부채비율은 얼마인가?", "must_contain": ["36.2%", "36.2%"], "gold": "36.2%"}
+{"qid": "R46", "slice": "ratio", "question": "에스엠의 2025년 부채비율은 얼마인가?", "must_contain": ["47.8%", "47.8%"], "gold": "47.8%"}
+{"qid": "R47", "slice": "ratio", "question": "에스엠의 2025년 유동비율은 얼마인가?", "must_contain": ["197.2%", "197.2%"], "gold": "197.2%"}
+{"qid": "R48", "slice": "ratio", "question": "와이지엔터테인먼트의 2025년 유동비율은 얼마인가?", "must_contain": ["261.09%", "261.09%"], "gold": "261.09%"}
+{"qid": "D1", "slice": "major", "question": "2024년 11월 18일 삼성전자 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["50,144,628", "50,144,628"], "gold": "50,144,628", "rcept": "20241115000375"}
+{"qid": "D2", "slice": "major", "question": "2025년 2월 18일 삼성전자 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["48,149,247", "48,149,247"], "gold": "48,149,247", "rcept": "20250218001596"}
+{"qid": "D3", "slice": "major", "question": "2024년 11월 18일 삼성전자 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["2,682,737,598,000", "2,682,737,598,000"], "gold": "2,682,737,598,000", "rcept": "20241115000375"}
+{"qid": "D4", "slice": "major", "question": "2025년 2월 18일 삼성전자 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["2,696,357,832,000", "2,696,357,832,000"], "gold": "2,696,357,832,000", "rcept": "20250218001596"}
+{"qid": "D5", "slice": "major", "question": "2024년 11월 18일 삼성전자 자기주식 취득 목적은?", "must_contain": ["주주가치 제고 등"], "gold": "주주가치 제고 등", "rcept": "20241115000375"}
+{"qid": "D6", "slice": "major", "question": "2025년 2월 18일 삼성전자 자기주식 취득 목적은?", "must_contain": ["주주가치 제고 및 임직원 주식보상 등"], "gold": "주주가치 제고 및 임직원 주식보상 등", "rcept": "20250218001596"}
+{"qid": "D7", "slice": "exchange", "question": "2025년 삼성전자 공급계약의 계약상대는 누구인가?", "must_contain": ["테슬라(Tesla, Inc.)"], "gold": "테슬라(Tesla, Inc.)", "rcept": "20250731800028"}
+{"qid": "D8", "slice": "exchange", "question": "2025년 삼성전자 공급계약의 계약금액은?", "must_contain": ["22,764,764,160,000", "22,764,764,160,000"], "gold": "22,764,764,160,000", "rcept": "20250731800028"}
+{"qid": "D9", "slice": "exchange", "question": "2023년 한미반도체 공급계약의 계약금액은?", "must_contain": ["7,927,088,000", "7,927,088,000"], "gold": "7,927,088,000", "rcept": "20230530800118"}
+{"qid": "D10", "slice": "exchange", "question": "2023년 한미반도체 공급계약의 계약상대는 누구인가?", "must_contain": ["Forehope Semiconductor (Ningbo) Co.,Ltd."], "gold": "Forehope Semiconductor (Ningbo) Co.,Ltd.", "rcept": "20230530800118"}
+{"qid": "D11", "slice": "major", "question": "2024년 11월 27일 현대자동차 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,906,545", "3,906,545"], "gold": "3,906,545", "rcept": "20241127000199"}
+{"qid": "D12", "slice": "major", "question": "2026년 1월 29일 현대자동차 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["744,870", "744,870"], "gold": "744,870", "rcept": "20260129000336"}
+{"qid": "D13", "slice": "major", "question": "2024년 11월 27일 현대자동차 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["873,112,807,500", "873,112,807,500"], "gold": "873,112,807,500", "rcept": "20241127000199"}
+{"qid": "D14", "slice": "major", "question": "2026년 1월 29일 현대자동차 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["366,848,475,000", "366,848,475,000"], "gold": "366,848,475,000", "rcept": "20260129000336"}
+{"qid": "D15", "slice": "major", "question": "2024년 11월 27일 현대자동차 자기주식 취득 목적은?", "must_contain": ["주주가치 제고 등"], "gold": "주주가치 제고 등", "rcept": "20241127000199"}
+{"qid": "D16", "slice": "major", "question": "2026년 1월 29일 현대자동차 자기주식 취득 목적은?", "must_contain": ["주주가치 제고"], "gold": "주주가치 제고", "rcept": "20260129000336"}
+{"qid": "D17", "slice": "major", "question": "2023년 1월 27일 기아 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["7,215,007", "7,215,007"], "gold": "7,215,007", "rcept": "20230127000603"}
+{"qid": "D18", "slice": "major", "question": "2024년 1월 25일 기아 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["5,688,282", "5,688,282"], "gold": "5,688,282", "rcept": "20240125000291"}
+{"qid": "D19", "slice": "major", "question": "2025년 3월 14일 기아 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,486,055", "3,486,055"], "gold": "3,486,055", "rcept": "20250314001646"}
+{"qid": "D20", "slice": "major", "question": "2023년 1월 27일 기아 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["500,000,000,000", "500,000,000,000"], "gold": "500,000,000,000", "rcept": "20230127000603"}
+{"qid": "D21", "slice": "major", "question": "2024년 1월 25일 기아 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["500,000,000,000", "500,000,000,000"], "gold": "500,000,000,000", "rcept": "20240125000291"}
+{"qid": "D22", "slice": "major", "question": "2025년 3월 14일 기아 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["350,000,000,000", "350,000,000,000"], "gold": "350,000,000,000", "rcept": "20250314001646"}
+{"qid": "D23", "slice": "major", "question": "2023년 1월 27일 기아 자기주식 취득 목적은?", "must_contain": ["주주가치 제고 및 취득주식의 50% 소각"], "gold": "주주가치 제고 및 취득주식의 50% 소각", "rcept": "20230127000603"}
+{"qid": "D24", "slice": "major", "question": "2024년 1월 25일 기아 자기주식 취득 목적은?", "must_contain": ["자기주식 취득을 통한 주주가치 제고"], "gold": "자기주식 취득을 통한 주주가치 제고", "rcept": "20240125000291"}
+{"qid": "D25", "slice": "major", "question": "2025년 3월 14일 기아 자기주식 취득 목적은?", "must_contain": ["자기주식 취득을 통한 주주가치 제고"], "gold": "자기주식 취득을 통한 주주가치 제고", "rcept": "20250314001646"}
+{"qid": "D26", "slice": "major", "question": "2023년 7월 26일 현대모비스 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["630,000", "630,000"], "gold": "630,000", "rcept": "20230726000317"}
+{"qid": "D27", "slice": "major", "question": "2024년 2월 16일 현대모비스 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["660,000", "660,000"], "gold": "660,000", "rcept": "20240216001385"}
+{"qid": "D28", "slice": "major", "question": "2025년 2월 13일 현대모비스 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["1,200,000", "1,200,000"], "gold": "1,200,000", "rcept": "20250213001638"}
+{"qid": "D29", "slice": "major", "question": "2023년 7월 26일 현대모비스 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["151,830,000,000", "151,830,000,000"], "gold": "151,830,000,000", "rcept": "20230726000317"}
+{"qid": "D30", "slice": "major", "question": "2024년 2월 16일 현대모비스 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["149,820,000,000", "149,820,000,000"], "gold": "149,820,000,000", "rcept": "20240216001385"}
+{"qid": "D31", "slice": "major", "question": "2025년 2월 13일 현대모비스 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["291,000,000,000", "291,000,000,000"], "gold": "291,000,000,000", "rcept": "20250213001638"}
+{"qid": "D32", "slice": "major", "question": "2023년 7월 26일 현대모비스 자기주식 취득 목적은?", "must_contain": ["주주가치 제고를 목적으로자기주식 취득 및 소각"], "gold": "주주가치 제고를 목적으로자기주식 취득 및 소각", "rcept": "20230726000317"}
+{"qid": "D33", "slice": "major", "question": "2024년 2월 16일 현대모비스 자기주식 취득 목적은?", "must_contain": ["주주가치 제고를 목적으로자기주식 취득 및 소각"], "gold": "주주가치 제고를 목적으로자기주식 취득 및 소각", "rcept": "20240216001385"}
+{"qid": "D34", "slice": "major", "question": "2025년 2월 13일 현대모비스 자기주식 취득 목적은?", "must_contain": ["주주가치 제고를 목적으로자기주식 취득 및 소각"], "gold": "주주가치 제고를 목적으로자기주식 취득 및 소각", "rcept": "20250213001638"}
+{"qid": "D35", "slice": "exchange", "question": "2023년 현대오토에버 공급계약의 계약금액은?", "must_contain": ["119,277,000,000", "119,277,000,000"], "gold": "119,277,000,000", "rcept": "20231115800491"}
+{"qid": "D36", "slice": "exchange", "question": "2024년 현대오토에버 공급계약의 계약금액은?", "must_contain": ["105,400,000,000", "105,400,000,000"], "gold": "105,400,000,000", "rcept": "20241203800532"}
+{"qid": "D37", "slice": "exchange", "question": "2025년 현대오토에버 공급계약의 계약금액은?", "must_contain": ["125,514,000,000", "125,514,000,000"], "gold": "125,514,000,000", "rcept": "20250731800497"}
+{"qid": "D38", "slice": "exchange", "question": "2023년 현대오토에버 공급계약의 계약상대는 누구인가?", "must_contain": ["MOTIONAL AD INC."], "gold": "MOTIONAL AD INC.", "rcept": "20231115800491"}
+{"qid": "D39", "slice": "exchange", "question": "2024년 현대오토에버 공급계약의 계약상대는 누구인가?", "must_contain": ["현대자동차 주식회사"], "gold": "현대자동차 주식회사", "rcept": "20241203800532"}
+{"qid": "D40", "slice": "exchange", "question": "2025년 현대오토에버 공급계약의 계약상대는 누구인가?", "must_contain": ["현대자동차 주식회사 및 기아 주식회사"], "gold": "현대자동차 주식회사 및 기아 주식회사", "rcept": "20250731800497"}
+{"qid": "D41", "slice": "exchange", "question": "2024년 레인보우로보틱스 공급계약의 계약상대는 누구인가?", "must_contain": ["㈜엣눅하다"], "gold": "㈜엣눅하다", "rcept": "20240529900225"}
+{"qid": "D42", "slice": "exchange", "question": "2024년 LG에너지솔루션 공급계약의 계약금액은?", "must_contain": ["-", ""], "gold": "-", "rcept": "20240126800734"}
+{"qid": "D43", "slice": "exchange", "question": "2024년 LG에너지솔루션 공급계약의 계약상대는 누구인가?", "must_contain": ["ISUZU MOTORS LIMITED"], "gold": "ISUZU MOTORS LIMITED", "rcept": "20240126800734"}
+{"qid": "D44", "slice": "exchange", "question": "2025년 삼성SDI 공급계약의 계약금액은?", "must_contain": ["437,429,850,083", "437,429,850,083"], "gold": "437,429,850,083", "rcept": "20250314800002"}
+{"qid": "D45", "slice": "exchange", "question": "2025년 삼성SDI 공급계약의 계약상대는 누구인가?", "must_contain": ["NextEra Energy"], "gold": "NextEra Energy", "rcept": "20250314800002"}
+{"qid": "D46", "slice": "major", "question": "2024년 7월 12일 POSCO홀딩스 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["255,428", "255,428"], "gold": "255,428", "rcept": "20240712000097"}
+{"qid": "D47", "slice": "major", "question": "2024년 7월 12일 POSCO홀딩스 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["100,000,062,000", "100,000,062,000"], "gold": "100,000,062,000", "rcept": "20240712000097"}
+{"qid": "D48", "slice": "major", "question": "2024년 7월 12일 POSCO홀딩스 자기주식 취득 목적은?", "must_contain": ["주주가치 제고를 위 한 소각"], "gold": "주주가치 제고를 위 한 소각", "rcept": "20240712000097"}
+{"qid": "D49", "slice": "major", "question": "2024년 10월 11일 고려아연 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,623,075", "3,623,075"], "gold": "3,623,075", "rcept": "20241011000053"}
+{"qid": "D50", "slice": "major", "question": "2024년 10월 11일 고려아연 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["3,224,536,750,000", "3,224,536,750,000"], "gold": "3,224,536,750,000", "rcept": "20241011000053"}
+{"qid": "D51", "slice": "major", "question": "2024년 10월 11일 고려아연 자기주식 취득 목적은?", "must_contain": ["자기주식 공개매수를 통한 주가안정,기업가치 제고 및 주주 권익 보호(주식 소각)"], "gold": "자기주식 공개매수를 통한 주가안정,기업가치 제고 및 주주 권익 보호(주식 소각)", "rcept": "20241011000053"}
+{"qid": "D52", "slice": "major", "question": "2023년 2월 7일 KB금융 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["5,385,996", "5,385,996"], "gold": "5,385,996", "rcept": "20230207000432"}
+{"qid": "D53", "slice": "major", "question": "2025년 2월 5일 KB금융 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["5,695,509", "5,695,509"], "gold": "5,695,509", "rcept": "20250205000299"}
+{"qid": "D54", "slice": "major", "question": "2025년 4월 25일 KB금융 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,529,411", "3,529,411"], "gold": "3,529,411", "rcept": "20250425000885"}
+{"qid": "D55", "slice": "major", "question": "2023년 2월 7일 KB금융 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["300,000,000,000", "300,000,000,000"], "gold": "300,000,000,000", "rcept": "20230207000432"}
+{"qid": "D56", "slice": "major", "question": "2025년 2월 5일 KB금융 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["520,000,000,000", "520,000,000,000"], "gold": "520,000,000,000", "rcept": "20250205000299"}
+{"qid": "D57", "slice": "major", "question": "2025년 4월 25일 KB금융 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["300,000,000,000", "300,000,000,000"], "gold": "300,000,000,000", "rcept": "20250425000885"}
+{"qid": "D58", "slice": "major", "question": "2023년 2월 7일 KB금융 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20230207000432"}
+{"qid": "D59", "slice": "major", "question": "2025년 2월 5일 KB금융 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20250205000299"}
+{"qid": "D60", "slice": "major", "question": "2025년 4월 25일 KB금융 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20250425000885"}
+{"qid": "D61", "slice": "major", "question": "2023년 2월 8일 신한지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,676,470", "3,676,470"], "gold": "3,676,470", "rcept": "20230208000115"}
+{"qid": "D62", "slice": "major", "question": "2023년 4월 27일 신한지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["4,243,281", "4,243,281"], "gold": "4,243,281", "rcept": "20230427000308"}
+{"qid": "D63", "slice": "major", "question": "2023년 7월 27일 신한지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["2,994,011", "2,994,011"], "gold": "2,994,011", "rcept": "20230727000152"}
+{"qid": "D64", "slice": "major", "question": "2023년 2월 8일 신한지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["150,000,000,000", "150,000,000,000"], "gold": "150,000,000,000", "rcept": "20230208000115"}
+{"qid": "D65", "slice": "major", "question": "2023년 4월 27일 신한지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["150,000,000,000", "150,000,000,000"], "gold": "150,000,000,000", "rcept": "20230427000308"}
+{"qid": "D66", "slice": "major", "question": "2023년 7월 27일 신한지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["100,000,000,000", "100,000,000,000"], "gold": "100,000,000,000", "rcept": "20230727000152"}
+{"qid": "D67", "slice": "major", "question": "2023년 2월 8일 신한지주 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20230208000115"}
+{"qid": "D68", "slice": "major", "question": "2023년 4월 27일 신한지주 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20230427000308"}
+{"qid": "D69", "slice": "major", "question": "2023년 7월 27일 신한지주 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20230727000152"}
+{"qid": "D70", "slice": "major", "question": "2025년 7월 25일 하나금융지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["2,197,802", "2,197,802"], "gold": "2,197,802", "rcept": "20250725000416"}
+{"qid": "D71", "slice": "major", "question": "2025년 10월 28일 하나금융지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["1,708,428", "1,708,428"], "gold": "1,708,428", "rcept": "20251028000206"}
+{"qid": "D72", "slice": "major", "question": "2026년 1월 30일 하나금융지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["1,930,501", "1,930,501"], "gold": "1,930,501", "rcept": "20260130000357"}
+{"qid": "D73", "slice": "major", "question": "2025년 7월 25일 하나금융지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["200,000,000,000", "200,000,000,000"], "gold": "200,000,000,000", "rcept": "20250725000416"}
+{"qid": "D74", "slice": "major", "question": "2025년 10월 28일 하나금융지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["150,000,000,000", "150,000,000,000"], "gold": "150,000,000,000", "rcept": "20251028000206"}
+{"qid": "D75", "slice": "major", "question": "2026년 1월 30일 하나금융지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["200,000,000,000", "200,000,000,000"], "gold": "200,000,000,000", "rcept": "20260130000357"}
+{"qid": "D76", "slice": "major", "question": "2025년 7월 25일 하나금융지주 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20250725000416"}
+{"qid": "D77", "slice": "major", "question": "2025년 10월 28일 하나금융지주 자기주식 취득 목적은?", "must_contain": ["주식소각"], "gold": "주식소각", "rcept": "20251028000206"}
+{"qid": "D78", "slice": "major", "question": "2026년 1월 30일 하나금융지주 자기주식 취득 목적은?", "must_contain": ["주주환원 및 기업가치 제고"], "gold": "주주환원 및 기업가치 제고", "rcept": "20260130000357"}
+{"qid": "D79", "slice": "major", "question": "2024년 3월 13일 우리금융지주 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["9,357,960", "9,357,960"], "gold": "9,357,960", "rcept": "20240313001515"}
+{"qid": "D80", "slice": "major", "question": "2024년 3월 13일 우리금융지주 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["136,626,216,000", "136,626,216,000"], "gold": "136,626,216,000", "rcept": "20240313001515"}
+{"qid": "D81", "slice": "major", "question": "2024년 3월 13일 우리금융지주 자기주식 취득 목적은?", "must_contain": ["자기주식 취득 및 소각을 통한 주주가치 제고"], "gold": "자기주식 취득 및 소각을 통한 주주가치 제고", "rcept": "20240313001515"}
+{"qid": "D82", "slice": "major", "question": "2023년 10월 18일 미래에셋증권 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["10,000,000", "10,000,000"], "gold": "10,000,000", "rcept": "20231018000008"}
+{"qid": "D83", "slice": "major", "question": "2024년 1월 25일 미래에셋증권 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["10,000,000", "10,000,000"], "gold": "10,000,000", "rcept": "20240125000187"}
+{"qid": "D84", "slice": "major", "question": "2024년 8월 7일 미래에셋증권 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["10,000,000", "10,000,000"], "gold": "10,000,000", "rcept": "20240807000021"}
+{"qid": "D85", "slice": "major", "question": "2023년 10월 18일 미래에셋증권 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["60,200,000,000", "60,200,000,000"], "gold": "60,200,000,000", "rcept": "20231018000008"}
+{"qid": "D86", "slice": "major", "question": "2024년 1월 25일 미래에셋증권 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["67,900,000,000", "67,900,000,000"], "gold": "67,900,000,000", "rcept": "20240125000187"}
+{"qid": "D87", "slice": "major", "question": "2024년 8월 7일 미래에셋증권 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["68,700,000,000", "68,700,000,000"], "gold": "68,700,000,000", "rcept": "20240807000021"}
+{"qid": "D88", "slice": "major", "question": "2023년 10월 18일 미래에셋증권 자기주식 취득 목적은?", "must_contain": ["주주가치 제고"], "gold": "주주가치 제고", "rcept": "20231018000008"}
+{"qid": "D89", "slice": "major", "question": "2024년 1월 25일 미래에셋증권 자기주식 취득 목적은?", "must_contain": ["주주가치 제고"], "gold": "주주가치 제고", "rcept": "20240125000187"}
+{"qid": "D90", "slice": "major", "question": "2024년 8월 7일 미래에셋증권 자기주식 취득 목적은?", "must_contain": ["주식 소각을 통한 주주가치 제고"], "gold": "주식 소각을 통한 주주가치 제고", "rcept": "20240807000021"}
+{"qid": "D91", "slice": "exchange", "question": "2025년 LG씨엔에스 공급계약의 계약금액은?", "must_contain": ["-", ""], "gold": "-", "rcept": "20250623800158"}
+{"qid": "D92", "slice": "exchange", "question": "2025년 LG씨엔에스 공급계약의 계약상대는 누구인가?", "must_contain": ["네이버클라우드주식회사"], "gold": "네이버클라우드주식회사", "rcept": "20250623800158"}
+{"qid": "D93", "slice": "major", "question": "2024년 9월 30일 NAVER 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["2,347,500", "2,347,500"], "gold": "2,347,500", "rcept": "20240930000001"}
+{"qid": "D94", "slice": "major", "question": "2024년 9월 30일 NAVER 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["401,187,750,000", "401,187,750,000"], "gold": "401,187,750,000", "rcept": "20240930000001"}
+{"qid": "D95", "slice": "major", "question": "2024년 9월 30일 NAVER 자기주식 취득 목적은?", "must_contain": ["이익소각"], "gold": "이익소각", "rcept": "20240930000001"}
+{"qid": "D96", "slice": "major", "question": "2023년 5월 11일 케이티 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["4,994", "4,994"], "gold": "4,994", "rcept": "20230511000450"}
+{"qid": "D97", "slice": "major", "question": "2024년 2월 8일 케이티 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["715,985", "715,985"], "gold": "715,985", "rcept": "20240208000001"}
+{"qid": "D98", "slice": "major", "question": "2023년 5월 11일 케이티 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["156,561,900", "156,561,900"], "gold": "156,561,900", "rcept": "20230511000450"}
+{"qid": "D99", "slice": "major", "question": "2024년 2월 8일 케이티 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["27,100,032,250", "27,100,032,250"], "gold": "27,100,032,250", "rcept": "20240208000001"}
+{"qid": "D100", "slice": "major", "question": "2023년 5월 11일 케이티 자기주식 취득 목적은?", "must_contain": ["기 지급된 장기성과 주식 지급취소에 따른 자기주식 취득"], "gold": "기 지급된 장기성과 주식 지급취소에 따른 자기주식 취득", "rcept": "20230511000450"}
+{"qid": "D101", "slice": "major", "question": "2024년 2월 8일 케이티 자기주식 취득 목적은?", "must_contain": ["주주가치 제고를 위한 자기주식 취득 후 소각"], "gold": "주주가치 제고를 위한 자기주식 취득 후 소각", "rcept": "20240208000001"}
+{"qid": "D102", "slice": "major", "question": "2024년 5월 9일 NC 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["533,417", "533,417"], "gold": "533,417", "rcept": "20240509000521"}
+{"qid": "D103", "slice": "major", "question": "2024년 5월 9일 NC 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["98,095,386,300", "98,095,386,300"], "gold": "98,095,386,300", "rcept": "20240509000521"}
+{"qid": "D104", "slice": "major", "question": "2024년 5월 9일 NC 자기주식 취득 목적은?", "must_contain": ["주주가치 제고"], "gold": "주주가치 제고", "rcept": "20240509000521"}
+{"qid": "D105", "slice": "exchange", "question": "2023년 NC 공급계약의 계약금액은?", "must_contain": ["-", ""], "gold": "-", "rcept": "20230222800834"}
+{"qid": "D106", "slice": "exchange", "question": "2025년 NC 공급계약의 계약금액은?", "must_contain": ["-", ""], "gold": "-", "rcept": "20250905800516"}
+{"qid": "D107", "slice": "exchange", "question": "2023년 NC 공급계약의 계약상대는 누구인가?", "must_contain": ["Amazon Games"], "gold": "Amazon Games", "rcept": "20230222800834"}
+{"qid": "D108", "slice": "exchange", "question": "2025년 NC 공급계약의 계약상대는 누구인가?", "must_contain": ["- Shenzhen Tencent Computer Systems Company Limited - Hainan Tencent Network Information Technology Company Limited"], "gold": "- Shenzhen Tencent Computer Systems Company Limited - Hainan Tencent Network Information Technology Company Limited", "rcept": "20250905800516"}
+{"qid": "D109", "slice": "major", "question": "2023년 3월 28일 크래프톤 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["960,000", "960,000"], "gold": "960,000", "rcept": "20230328000635"}
+{"qid": "D110", "slice": "major", "question": "2024년 3월 26일 크래프톤 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["830,000", "830,000"], "gold": "830,000", "rcept": "20240326000777"}
+{"qid": "D111", "slice": "major", "question": "2025년 3월 26일 크래프톤 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["970,000", "970,000"], "gold": "970,000", "rcept": "20250326000967"}
+{"qid": "D112", "slice": "major", "question": "2023년 3월 28일 크래프톤 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["167,904,000,000", "167,904,000,000"], "gold": "167,904,000,000", "rcept": "20230328000635"}
+{"qid": "D113", "slice": "major", "question": "2024년 3월 26일 크래프톤 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["199,200,000,000", "199,200,000,000"], "gold": "199,200,000,000", "rcept": "20240326000777"}
+{"qid": "D114", "slice": "major", "question": "2025년 3월 26일 크래프톤 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["325,920,000,000", "325,920,000,000"], "gold": "325,920,000,000", "rcept": "20250326000967"}
+{"qid": "D115", "slice": "major", "question": "2023년 3월 28일 크래프톤 자기주식 취득 목적은?", "must_contain": ["자기주식 취득 및 소각을 통한 주주가치 제고"], "gold": "자기주식 취득 및 소각을 통한 주주가치 제고", "rcept": "20230328000635"}
+{"qid": "D116", "slice": "major", "question": "2024년 3월 26일 크래프톤 자기주식 취득 목적은?", "must_contain": ["자기주식 취득 및 소각을 통한 주주가치 제고"], "gold": "자기주식 취득 및 소각을 통한 주주가치 제고", "rcept": "20240326000777"}
+{"qid": "D117", "slice": "major", "question": "2025년 3월 26일 크래프톤 자기주식 취득 목적은?", "must_contain": ["자기주식 취득 및 소각을 통한 주주가치 제고"], "gold": "자기주식 취득 및 소각을 통한 주주가치 제고", "rcept": "20250326000967"}
+{"qid": "D118", "slice": "exchange", "question": "2023년 삼성바이오로직스 공급계약의 계약금액은?", "must_contain": ["219,492,488,908", "219,492,488,908"], "gold": "219,492,488,908", "rcept": "20230426800350"}
+{"qid": "D119", "slice": "exchange", "question": "2023년 삼성바이오로직스 공급계약의 계약상대는 누구인가?", "must_contain": ["GlaxoSmithKline Trading Services Limited"], "gold": "GlaxoSmithKline Trading Services Limited", "rcept": "20230426800350"}
+{"qid": "D120", "slice": "major", "question": "2023년 2월 1일 셀트리온 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["309,406", "309,406"], "gold": "309,406", "rcept": "20230201000013"}
+{"qid": "D121", "slice": "major", "question": "2023년 3월 3일 셀트리온 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["347,948", "347,948"], "gold": "347,948", "rcept": "20230303000185"}
+{"qid": "D122", "slice": "major", "question": "2023년 6월 22일 셀트리온 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["314,466", "314,466"], "gold": "314,466", "rcept": "20230622000117"}
+{"qid": "D123", "slice": "major", "question": "2023년 2월 1일 셀트리온 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["50,000,009,600", "50,000,009,600"], "gold": "50,000,009,600", "rcept": "20230201000013"}
+{"qid": "D124", "slice": "major", "question": "2023년 3월 3일 셀트리온 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["50,000,127,600", "50,000,127,600"], "gold": "50,000,127,600", "rcept": "20230303000185"}
+{"qid": "D125", "slice": "major", "question": "2023년 6월 22일 셀트리온 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["50,000,094,000", "50,000,094,000"], "gold": "50,000,094,000", "rcept": "20230622000117"}
+{"qid": "D126", "slice": "major", "question": "2023년 2월 1일 셀트리온 자기주식 취득 목적은?", "must_contain": ["주가 안정 및 주주가치 제고"], "gold": "주가 안정 및 주주가치 제고", "rcept": "20230201000013"}
+{"qid": "D127", "slice": "major", "question": "2023년 3월 3일 셀트리온 자기주식 취득 목적은?", "must_contain": ["주가 안정 및 주주가치 제고"], "gold": "주가 안정 및 주주가치 제고", "rcept": "20230303000185"}
+{"qid": "D128", "slice": "major", "question": "2023년 6월 22일 셀트리온 자기주식 취득 목적은?", "must_contain": ["주가 안정 및 주주가치 제고"], "gold": "주가 안정 및 주주가치 제고", "rcept": "20230622000117"}
+{"qid": "D129", "slice": "exchange", "question": "2023년 셀트리온 공급계약의 계약금액은?", "must_contain": ["406,350,000,000", "406,350,000,000"], "gold": "406,350,000,000", "rcept": "20230329800081"}
+{"qid": "D130", "slice": "exchange", "question": "2023년 셀트리온 공급계약의 계약상대는 누구인가?", "must_contain": ["(주)셀트리온헬스케어"], "gold": "(주)셀트리온헬스케어", "rcept": "20230329800081"}
+{"qid": "D131", "slice": "exchange", "question": "2025년 파마리서치 공급계약의 계약상대는 누구인가?", "must_contain": ["Hangzhou Yxintent Co., Ltd."], "gold": "Hangzhou Yxintent Co., Ltd.", "rcept": "20250115900492"}
+{"qid": "D132", "slice": "exchange", "question": "2023년 한미약품 공급계약의 계약상대는 누구인가?", "must_contain": ["주식회사 제넥신 (Genexine)"], "gold": "주식회사 제넥신 (Genexine)", "rcept": "20230227800485"}
+{"qid": "D133", "slice": "exchange", "question": "2025년 한미약품 공급계약의 계약상대는 누구인가?", "must_contain": ["1) 계약상대방: AffaMed Therapeutics Limited (중국)"], "gold": "1) 계약상대방: AffaMed Therapeutics Limited (중국)", "rcept": "20250903800345"}
+{"qid": "D134", "slice": "exchange", "question": "2026년 한미약품 공급계약의 계약상대는 누구인가?", "must_contain": ["Laboratorios Sanfer, S.A. de C.V"], "gold": "Laboratorios Sanfer, S.A. de C.V", "rcept": "20260128800054"}
+{"qid": "D135", "slice": "exchange", "question": "2026년 한미약품 공급계약의 계약금액은?", "must_contain": ["65,806,119,333", "65,806,119,333"], "gold": "65,806,119,333", "rcept": "20260128800054"}
+{"qid": "D136", "slice": "exchange", "question": "2023년 HD현대중공업 공급계약의 계약금액은?", "must_contain": ["971,400,000,000", "971,400,000,000"], "gold": "971,400,000,000", "rcept": "20230117800134"}
+{"qid": "D137", "slice": "exchange", "question": "2023년 HD현대중공업 공급계약의 계약상대는 누구인가?", "must_contain": ["오세아니아 소재 선사"], "gold": "오세아니아 소재 선사", "rcept": "20230117800134"}
+{"qid": "D138", "slice": "major", "question": "2026년 3월 5일 한화오션 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["37,721", "37,721"], "gold": "37,721", "rcept": "20260305000671"}
+{"qid": "D139", "slice": "major", "question": "2026년 3월 5일 한화오션 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["5,107,423,400", "5,107,423,400"], "gold": "5,107,423,400", "rcept": "20260305000671"}
+{"qid": "D140", "slice": "major", "question": "2026년 3월 5일 한화오션 자기주식 취득 목적은?", "must_contain": ["임직원 주식보상"], "gold": "임직원 주식보상", "rcept": "20260305000671"}
+{"qid": "D141", "slice": "exchange", "question": "2023년 한화오션 공급계약의 계약금액은?", "must_contain": ["679,400,000,000", "679,400,000,000"], "gold": "679,400,000,000", "rcept": "20230314800431"}
+{"qid": "D142", "slice": "exchange", "question": "2023년 한화오션 공급계약의 계약상대는 누구인가?", "must_contain": ["오세아니아 지역 선주"], "gold": "오세아니아 지역 선주", "rcept": "20230314800431"}
+{"qid": "D143", "slice": "exchange", "question": "2023년 삼성중공업 공급계약의 계약금액은?", "must_contain": ["609,700,000,000", "609,700,000,000"], "gold": "609,700,000,000", "rcept": "20230201800040"}
+{"qid": "D144", "slice": "exchange", "question": "2023년 삼성중공업 공급계약의 계약상대는 누구인가?", "must_contain": ["오세아니아 지역 선주"], "gold": "오세아니아 지역 선주", "rcept": "20230201800040"}
+{"qid": "D145", "slice": "exchange", "question": "2023년 두산에너빌리티 공급계약의 계약금액은?", "must_contain": ["2,338,117,950,000", "2,338,117,950,000"], "gold": "2,338,117,950,000", "rcept": "20230329801108"}
+{"qid": "D146", "slice": "exchange", "question": "2023년 두산에너빌리티 공급계약의 계약상대는 누구인가?", "must_contain": ["한국수력원자력(주)"], "gold": "한국수력원자력(주)", "rcept": "20230329801108"}
+{"qid": "D147", "slice": "exchange", "question": "2023년 한전기술 공급계약의 계약금액은?", "must_contain": ["27,027,600,000", "27,027,600,000"], "gold": "27,027,600,000", "rcept": "20230307800271"}
+{"qid": "D148", "slice": "exchange", "question": "2023년 한전기술 공급계약의 계약상대는 누구인가?", "must_contain": ["한국동서발전(주)"], "gold": "한국동서발전(주)", "rcept": "20230307800271"}
+{"qid": "D149", "slice": "exchange", "question": "2023년 우리기술 공급계약의 계약상대는 누구인가?", "must_contain": ["한국수력원자력"], "gold": "한국수력원자력", "rcept": "20230102900376"}
+{"qid": "D150", "slice": "exchange", "question": "2023년 한화에어로스페이스 공급계약의 계약금액은?", "must_contain": ["182,019,000,000", "182,019,000,000"], "gold": "182,019,000,000", "rcept": "20230630800101"}
+{"qid": "D151", "slice": "exchange", "question": "2023년 한화에어로스페이스 공급계약의 계약상대는 누구인가?", "must_contain": ["방위사업청"], "gold": "방위사업청", "rcept": "20230630800101"}
+{"qid": "D152", "slice": "exchange", "question": "2023년 현대로템 공급계약의 계약금액은?", "must_contain": ["174,143,441,588", "174,143,441,588"], "gold": "174,143,441,588", "rcept": "20230202800044"}
+{"qid": "D153", "slice": "exchange", "question": "2023년 현대로템 공급계약의 계약상대는 누구인가?", "must_contain": ["BMC OTOMOTIV SANAYI VE TICARET A.S."], "gold": "BMC OTOMOTIV SANAYI VE TICARET A.S.", "rcept": "20230202800044"}
+{"qid": "D154", "slice": "exchange", "question": "2023년 한국항공우주 공급계약의 계약금액은?", "must_contain": ["1,195,242,120,000", "1,195,242,120,000"], "gold": "1,195,242,120,000", "rcept": "20230224800251"}
+{"qid": "D155", "slice": "exchange", "question": "2023년 한국항공우주 공급계약의 계약상대는 누구인가?", "must_contain": ["말레이시아 국방부(Malaysia MINDEF)"], "gold": "말레이시아 국방부(Malaysia MINDEF)", "rcept": "20230224800251"}
+{"qid": "D156", "slice": "exchange", "question": "2023년 LIG디펜스앤에어로스페이스 공급계약의 계약금액은?", "must_contain": ["68,591,800,000", "68,591,800,000"], "gold": "68,591,800,000", "rcept": "20230117800244"}
+{"qid": "D157", "slice": "exchange", "question": "2023년 LIG디펜스앤에어로스페이스 공급계약의 계약상대는 누구인가?", "must_contain": ["국방과학연구소"], "gold": "국방과학연구소", "rcept": "20230117800244"}
+{"qid": "D158", "slice": "major", "question": "2023년 10월 31일 아모레퍼시픽 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["85,471", "85,471"], "gold": "85,471", "rcept": "20231031000004"}
+{"qid": "D159", "slice": "major", "question": "2025년 8월 1일 아모레퍼시픽 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["37,120", "37,120"], "gold": "37,120", "rcept": "20250801000303"}
+{"qid": "D160", "slice": "major", "question": "2026년 3월 9일 아모레퍼시픽 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["75,988", "75,988"], "gold": "75,988", "rcept": "20260309001389"}
+{"qid": "D161", "slice": "major", "question": "2023년 10월 31일 아모레퍼시픽 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["10,000,107,000", "10,000,107,000"], "gold": "10,000,107,000", "rcept": "20231031000004"}
+{"qid": "D162", "slice": "major", "question": "2025년 8월 1일 아모레퍼시픽 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["5,000,064,000", "5,000,064,000"], "gold": "5,000,064,000", "rcept": "20250801000303"}
+{"qid": "D163", "slice": "major", "question": "2026년 3월 9일 아모레퍼시픽 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["10,000,020,800", "10,000,020,800"], "gold": "10,000,020,800", "rcept": "20260309001389"}
+{"qid": "D164", "slice": "major", "question": "2023년 10월 31일 아모레퍼시픽 자기주식 취득 목적은?", "must_contain": ["임직원 성과보상 지급 및 장기근속자 포상"], "gold": "임직원 성과보상 지급 및 장기근속자 포상", "rcept": "20231031000004"}
+{"qid": "D165", "slice": "major", "question": "2025년 8월 1일 아모레퍼시픽 자기주식 취득 목적은?", "must_contain": ["임직원 상여금 지급 및 장기근속자 포상"], "gold": "임직원 상여금 지급 및 장기근속자 포상", "rcept": "20250801000303"}
+{"qid": "D166", "slice": "major", "question": "2026년 3월 9일 아모레퍼시픽 자기주식 취득 목적은?", "must_contain": ["임직원 상여금 지급 및 장기근속자포상"], "gold": "임직원 상여금 지급 및 장기근속자포상", "rcept": "20260309001389"}
+{"qid": "D167", "slice": "exchange", "question": "2024년 아모레퍼시픽 공급계약의 계약금액은?", "must_contain": ["209,606,962,407", "209,606,962,407"], "gold": "209,606,962,407", "rcept": "20240228800335"}
+{"qid": "D168", "slice": "exchange", "question": "2024년 아모레퍼시픽 공급계약의 계약상대는 누구인가?", "must_contain": ["삼일회계법인 (Samil PricewaterhouseCoopers)"], "gold": "삼일회계법인 (Samil PricewaterhouseCoopers)", "rcept": "20240228800335"}
+{"qid": "D169", "slice": "major", "question": "2024년 7월 18일 이마트 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["1,000", "1,000"], "gold": "1,000", "rcept": "20240718000126"}
+{"qid": "D170", "slice": "major", "question": "2025년 1월 20일 이마트 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["775", "775"], "gold": "775", "rcept": "20250120000481"}
+{"qid": "D171", "slice": "major", "question": "2025년 7월 17일 이마트 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["3,525", "3,525"], "gold": "3,525", "rcept": "20250717000187"}
+{"qid": "D172", "slice": "major", "question": "2024년 7월 18일 이마트 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["57,600,000", "57,600,000"], "gold": "57,600,000", "rcept": "20240718000126"}
+{"qid": "D173", "slice": "major", "question": "2025년 1월 20일 이마트 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["51,072,500", "51,072,500"], "gold": "51,072,500", "rcept": "20250120000481"}
+{"qid": "D174", "slice": "major", "question": "2025년 7월 17일 이마트 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["341,925,000", "341,925,000"], "gold": "341,925,000", "rcept": "20250717000187"}
+{"qid": "D175", "slice": "major", "question": "2024년 7월 18일 이마트 자기주식 취득 목적은?", "must_contain": ["임원 RSU 상여 보상"], "gold": "임원 RSU 상여 보상", "rcept": "20240718000126"}
+{"qid": "D176", "slice": "major", "question": "2025년 1월 20일 이마트 자기주식 취득 목적은?", "must_contain": ["임원 RSU 상여 보상"], "gold": "임원 RSU 상여 보상", "rcept": "20250120000481"}
+{"qid": "D177", "slice": "major", "question": "2025년 7월 17일 이마트 자기주식 취득 목적은?", "must_contain": ["임원 RSU 및 RSA 상여 보상"], "gold": "임원 RSU 및 RSA 상여 보상", "rcept": "20250717000187"}
+{"qid": "D178", "slice": "exchange", "question": "2023년 현대건설 공급계약의 계약금액은?", "must_contain": ["588,939,240,000", "588,939,240,000"], "gold": "588,939,240,000", "rcept": "20230127800757"}
+{"qid": "D179", "slice": "exchange", "question": "2023년 현대건설 공급계약의 계약상대는 누구인가?", "must_contain": ["Lusail Real Estate Development Company W.L.L.(LREDC)"], "gold": "Lusail Real Estate Development Company W.L.L.(LREDC)", "rcept": "20230127800757"}
+{"qid": "D180", "slice": "exchange", "question": "2023년 대우건설 공급계약의 계약금액은?", "must_contain": ["402,196,674,000", "402,196,674,000"], "gold": "402,196,674,000", "rcept": "20230131800738"}
+{"qid": "D181", "slice": "exchange", "question": "2023년 대우건설 공급계약의 계약상대는 누구인가?", "must_contain": ["서부광역철도 주식회사"], "gold": "서부광역철도 주식회사", "rcept": "20230131800738"}
+{"qid": "D182", "slice": "exchange", "question": "2023년 삼성E&A 공급계약의 계약금액은?", "must_contain": ["1,602,984,616,747", "1,602,984,616,747"], "gold": "1,602,984,616,747", "rcept": "20230109800082"}
+{"qid": "D183", "slice": "exchange", "question": "2023년 삼성E&A 공급계약의 계약상대는 누구인가?", "must_contain": ["Ras Laffan Petrochemicals"], "gold": "Ras Laffan Petrochemicals", "rcept": "20230109800082"}
+{"qid": "D184", "slice": "major", "question": "2025년 8월 14일 HMM 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["81,801,526", "81,801,526"], "gold": "81,801,526", "rcept": "20250814003240"}
+{"qid": "D185", "slice": "major", "question": "2025년 8월 14일 HMM 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["2,143,199,981,200", "2,143,199,981,200"], "gold": "2,143,199,981,200", "rcept": "20250814003240"}
+{"qid": "D186", "slice": "major", "question": "2025년 8월 14일 HMM 자기주식 취득 목적은?", "must_contain": ["주주환원을 통한 주주가치 제고"], "gold": "주주환원을 통한 주주가치 제고", "rcept": "20250814003240"}
+{"qid": "D187", "slice": "exchange", "question": "2023년 HMM 공급계약의 계약금액은?", "must_contain": ["635,384,978,972", "635,384,978,972"], "gold": "635,384,978,972", "rcept": "20230428800439"}
+{"qid": "D188", "slice": "exchange", "question": "2024년 HMM 공급계약의 계약금액은?", "must_contain": ["795,582,915,120", "795,582,915,120"], "gold": "795,582,915,120", "rcept": "20240115800455"}
+{"qid": "D189", "slice": "exchange", "question": "2023년 HMM 공급계약의 계약상대는 누구인가?", "must_contain": ["GS CALTEX"], "gold": "GS CALTEX", "rcept": "20230428800439"}
+{"qid": "D190", "slice": "exchange", "question": "2024년 HMM 공급계약의 계약상대는 누구인가?", "must_contain": ["-"], "gold": "-", "rcept": "20240115800455"}
+{"qid": "D191", "slice": "exchange", "question": "2024년 현대글로비스 공급계약의 계약금액은?", "must_contain": ["3,365,500,000,000", "3,365,500,000,000"], "gold": "3,365,500,000,000", "rcept": "20241231800103"}
+{"qid": "D192", "slice": "exchange", "question": "2025년 현대글로비스 공급계약의 계약금액은?", "must_contain": ["586,900,000,000", "586,900,000,000"], "gold": "586,900,000,000", "rcept": "20250117800481"}
+{"qid": "D193", "slice": "exchange", "question": "2024년 현대글로비스 공급계약의 계약상대는 누구인가?", "must_contain": ["현대자동차(주)"], "gold": "현대자동차(주)", "rcept": "20241231800103"}
+{"qid": "D194", "slice": "exchange", "question": "2025년 현대글로비스 공급계약의 계약상대는 누구인가?", "must_contain": ["글로벌 완성차 업체"], "gold": "글로벌 완성차 업체", "rcept": "20250117800481"}
+{"qid": "D195", "slice": "exchange", "question": "2023년 효성중공업 공급계약의 계약금액은?", "must_contain": ["80,312,100,000", "80,312,100,000"], "gold": "80,312,100,000", "rcept": "20230315801072"}
+{"qid": "D196", "slice": "exchange", "question": "2023년 효성중공업 공급계약의 계약상대는 누구인가?", "must_contain": ["잠원동 복합개발 PFV 주식회사"], "gold": "잠원동 복합개발 PFV 주식회사", "rcept": "20230315801072"}
+{"qid": "D197", "slice": "exchange", "question": "2023년 HD현대일렉트릭 공급계약의 계약금액은?", "must_contain": ["97,000,000,000", "97,000,000,000"], "gold": "97,000,000,000", "rcept": "20230131800162"}
+{"qid": "D198", "slice": "exchange", "question": "2023년 HD현대일렉트릭 공급계약의 계약상대는 누구인가?", "must_contain": ["Hyundai Electric America Corporation"], "gold": "Hyundai Electric America Corporation", "rcept": "20230131800162"}
+{"qid": "D199", "slice": "exchange", "question": "2023년 엘에스일렉트릭 공급계약의 계약금액은?", "must_contain": ["266,799,300,000", "266,799,300,000"], "gold": "266,799,300,000", "rcept": "20230405800944"}
+{"qid": "D200", "slice": "exchange", "question": "2023년 엘에스일렉트릭 공급계약의 계약상대는 누구인가?", "must_contain": ["ST ENGINEERING ELECTRONICS LTD."], "gold": "ST ENGINEERING ELECTRONICS LTD.", "rcept": "20230405800944"}
+{"qid": "D201", "slice": "exchange", "question": "2023년 두산퓨얼셀 공급계약의 계약금액은?", "must_contain": ["19,300,000,000", "19,300,000,000"], "gold": "19,300,000,000", "rcept": "20230331802739"}
+{"qid": "D202", "slice": "exchange", "question": "2023년 두산퓨얼셀 공급계약의 계약상대는 누구인가?", "must_contain": ["Zhejiang Beisen Hydrogen Science & Technology Co., Ltd."], "gold": "Zhejiang Beisen Hydrogen Science & Technology Co., Ltd.", "rcept": "20230331802739"}
+{"qid": "D203", "slice": "exchange", "question": "2024년 OCI홀딩스 공급계약의 계약상대는 누구인가?", "must_contain": ["3. 이사회의결의일(결정일) 또는 사실확인일은 양사합의에 의한 계약기간 종료일입니다."], "gold": "3. 이사회의결의일(결정일) 또는 사실확인일은 양사합의에 의한 계약기간 종료일입니다.", "rcept": "20241224800227"}
+{"qid": "D204", "slice": "exchange", "question": "2025년 OCI홀딩스 공급계약의 계약상대는 누구인가?", "must_contain": ["- 상기3의 '이사회결의일(결정일) 또는 사실확인일'은 양사합의에 의한 계약기간 종료일임."], "gold": "- 상기3의 '이사회결의일(결정일) 또는 사실확인일'은 양사합의에 의한 계약기간 종료일임.", "rcept": "20251219800244"}
+{"qid": "D205", "slice": "major", "question": "2024년 8월 27일 하이브 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["150,000", "150,000"], "gold": "150,000", "rcept": "20240827000661"}
+{"qid": "D206", "slice": "major", "question": "2026년 2월 12일 하이브 자기주식 취득 예정 보통주식은 몇 주인가?", "must_contain": ["546,120", "546,120"], "gold": "546,120", "rcept": "20260212001232"}
+{"qid": "D207", "slice": "major", "question": "2024년 8월 27일 하이브 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["26,595,000,000", "26,595,000,000"], "gold": "26,595,000,000", "rcept": "20240827000661"}
+{"qid": "D208", "slice": "major", "question": "2026년 2월 12일 하이브 자기주식 취득 예정 보통주식 금액은?", "must_contain": ["-", ""], "gold": "-", "rcept": "20260212001232"}
+{"qid": "D209", "slice": "major", "question": "2024년 8월 27일 하이브 자기주식 취득 목적은?", "must_contain": ["양도제한조건부주식(RSU) 부여 및 자기주식 매입을 통한 주가 안정성 제고"], "gold": "양도제한조건부주식(RSU) 부여 및 자기주식 매입을 통한 주가 안정성 제고", "rcept": "20240827000661"}
+{"qid": "D210", "slice": "major", "question": "2026년 2월 12일 하이브 자기주식 취득 목적은?", "must_contain": ["임직원 등의 성과보상 재원 목적취득"], "gold": "임직원 등의 성과보상 재원 목적취득", "rcept": "20260212001232"}
+{"qid": "D211", "slice": "exchange", "question": "2024년 JYP Ent 공급계약의 계약상대는 누구인가?", "must_contain": ["중국 IT 기업"], "gold": "중국 IT 기업", "rcept": "20240215900852"}

@@ -21,9 +21,9 @@ import json
 from decimal import Decimal
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_HERE, "..", "pipeline"))
+sys.path.insert(0, os.path.join(_HERE, "..", ".."))
 
-import numqa
+from ragrag.pipeline import numqa
 
 REPORT = os.path.join(_HERE, "..", "report")
 # 경로·압축 해석은 numqa가 이미 하므로 재사용한다(배포 패키지는 .gz만 담김).

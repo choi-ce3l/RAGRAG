@@ -1,0 +1,10 @@
+{
+  "n_companies": 70,
+  "counts": {
+    "fact_numeric": 527,
+    "dual": 68,
+    "compute": 99
+  },
+  "n_total": 694,
+  "out_dir": "/home/dslab/RAGRAG/choi/code_chunkingandparsing/src/../goldset_layerB"
+}

@@ -16,9 +16,9 @@ import json
 from collections import Counter
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_HERE, "..", "pipeline"))
+sys.path.insert(0, os.path.join(_HERE, "..", ".."))
 
-import numqa
+from ragrag.pipeline import numqa
 
 REPORT = os.path.join(_HERE, "..", "report")
 GOLD_C = os.path.join(_HERE, "..", "goldsets", "layerC", "goldC.jsonl")

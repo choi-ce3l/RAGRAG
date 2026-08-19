@@ -17,11 +17,11 @@ import re
 from collections import Counter
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_HERE, "..", "pipeline"))
+sys.path.insert(0, os.path.join(_HERE, "..", ".."))
 
-import load
-import parse
-import factx
+from ragrag.pipeline import load
+from ragrag.pipeline import parse
+from ragrag.pipeline import factx
 
 REPORT = os.path.join(_HERE, "..", "report")
 
