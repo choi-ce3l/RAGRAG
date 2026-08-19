@@ -161,87 +161,41 @@ def compute(frame):
     }
 
 
-def _restatement_scan(frame, scope):
-    """resolver의 supersede-pair가 실패했을 때의 폴백.
-
-    중요한 구분(diagnose.py에서도 다시 언급): goldset_layerA의 "comparison/restatement"는
-    같은 필링을 재제출한 [기재정정](supersede 체인)이 아니라, 서로 다른 두 연차보고서가
-    같은 회계연도 수치를 다르게 보고하는 "재작성"(예: 사업부 재분류·전기 비교표시 수정)이다.
-    resolver.resolve(pair)는 supersede 체인만 보므로 이 케이스에서 항상 no_correction_history로
-    실패한다 — 그래서 여기서는 supersede와 무관하게 (corp,metric,scope,year)로 전체
-    facts.jsonl을 스캔해, 값이 다른 서로 다른 필링이 2개 이상이면 그 중 최초 필링과
-    최신 필링을 "비교 쌍"으로 삼는다. is_superseded=True는 제외(gen_goldA_restate.py와
-    동일 정책). rcept_no는 접수일 기반이라 문자열 정렬이 곧 시간순이다.
-    """
-    all_facts = _load_all_facts()
-    cands = [f for f in all_facts
-             if f["corp_code"] == frame.corp_code and f.get("metric_key") == frame.metric
-             and f["scope"] == scope and f["base_year"] == frame.period.year
-             and not f["is_superseded"]]
-    by_doc = {}
-    for f in cands:
-        by_doc.setdefault(f["doc_id"], f)   # 문서당 1개(중복 행이면 첫 값)
-    if len(by_doc) < 2:
-        return None, None
-    ordered = sorted(by_doc.values(), key=lambda f: f["rcept_no"])
-    if ordered[0]["value_decimal"] == ordered[-1]["value_decimal"] and len(by_doc) == 2:
-        # 값이 같은 2건은 비교할 "재작성"이 없다는 뜻 — 그래도 답은 반환(same=True로).
-        pass
-    return ordered[0], ordered[-1]
-
-
 # ---------------------------------------------------------------------------
 def comparison(frame):
-    """resolver의 supersede pair(원공시·정정본)를 우선 시도하고, 정정 이력이 없으면
-    _restatement_scan()으로 폴백한다(위 독스트링 참고 — 이게 goldset_layerA의 실제 다수 케이스)."""
-    res = resolver.resolve(frame)
+    """MERGE numqa(`FactStore.lookup_all`) 기반 재작성/정정 비교로 재연결(Step 4-b, §5-A-2).
+
+    이전에는 resolver의 supersede pair를 우선 시도하고 실패 시 `_restatement_scan()`(facts
+    전량을 다시 스캔하는 자체 폴백)으로 넘어갔다. `lookup_all()`은 FactStore.idx가 애초에
+    같은 (corp_code, metric, scope, statement, year) 키 아래 모든 필링을 rcept_no 오름차순
+    (과거→최신)으로 이미 보존해두므로(numqa.py FactStore.__init__ 참고), supersede 체인
+    유무와 무관하게 그 리스트의 처음/끝만 꺼내면 되고 resolver 조회나 별도 스캔이 필요 없다
+    — goldset_layerA의 "재작성"이 supersede 체인이 아니라 서로 다른 두 연차보고서라는 성격
+    자체는 jin 원본 설계 그대로다(위 comparison/_restatement_scan 관련 논의는 README/
+    jin/INTEGRATION_PLAN.md §2-4 참고).
+    """
     scope = frame.scope or "consolidated"
-    method = res.method
-    low_conf = res.low_confidence
-    fallback_used = False
-
-    if res.original_doc_id and res.corrected_doc_id:
-        all_facts = _load_all_facts()
-
-        def _find(doc_id):
-            cands = [f for f in all_facts if f["doc_id"] == doc_id
-                     and f.get("metric_key") == frame.metric
-                     and f["scope"] == scope and f["base_year"] == frame.period.year]
-            return cands[0] if cands else None
-
-        orig_f, corr_f = _find(res.original_doc_id), _find(res.corrected_doc_id)
-    else:
-        orig_f, corr_f = None, None
-
-    if not (orig_f and corr_f):
-        orig_f, corr_f = _restatement_scan(frame, scope)
-        if orig_f and corr_f:
-            fallback_used = True
-            method = "restatement_scan"
-            low_conf = True   # 재작성 스캔은 검증된 체인이 아니라 값 비교 휴리스틱 — 저신뢰로 표기
-
-    if not (orig_f and corr_f):
-        return {"status": "no_pair", "resolver": res.to_dict(),
-                "text": "정정 전/후 쌍이나 재작성 비교 대상을 찾지 못했습니다."}
+    store = build_store()
+    recs = store.lookup_all(frame.corp_code, frame.metric, scope, frame.period.year,
+                             include_superseded=False)
+    if len(recs) < 2:
+        return {"status": "no_pair", "text": "정정 전/후 쌍이나 재작성 비교 대상을 찾지 못했습니다.",
+                "numbers": [], "sources": []}
+    orig_f, corr_f = recs[0], recs[-1]
 
     diff = choi_facts.compute("diff", [corr_f, orig_f])
     same = orig_f["value_decimal"] == corr_f["value_decimal"]
     diff_note = "값이 일치합니다" if same else f"값이 다릅니다(차이 {diff['value']})"
-    label = "정정 전/후" if not fallback_used else "초기 필링/최신 필링"
     text = (f"{frame.corp_name}의 {frame.period.year}년 {SCOPE_KO[scope]} {orig_f['label_norm']}은 "
-            f"{label} 각각 {orig_f['value_raw']} / {corr_f['value_raw']}({diff_note}).")
+            f"필링별로 접수 {orig_f['rcept_no']} / {corr_f['rcept_no']} 각각 "
+            f"{orig_f['value_raw']} / {corr_f['value_raw']}({diff_note}).")
     return {
         "status": "ok", "text": text, "numbers": [orig_f["value_raw"], corr_f["value_raw"]],
-        "same_value": same, "used_restatement_fallback": fallback_used,
+        "same_value": same,
         "sources": [
-            {"which": "early", "fact_id": orig_f["fact_id"], "rcept_no": orig_f["rcept_no"],
-             "version": "original" if not fallback_used else "earliest_filing",
-             "supersede_method": method},
-            {"which": "late", "fact_id": corr_f["fact_id"], "rcept_no": corr_f["rcept_no"],
-             "version": "corrected" if not fallback_used else "latest_filing",
-             "supersede_method": method},
+            {"which": "early", "fact_id": orig_f["fact_id"], "rcept_no": orig_f["rcept_no"]},
+            {"which": "late", "fact_id": corr_f["fact_id"], "rcept_no": corr_f["rcept_no"]},
         ],
-        "resolver": res.to_dict(), "low_confidence": low_conf,
     }
 
 

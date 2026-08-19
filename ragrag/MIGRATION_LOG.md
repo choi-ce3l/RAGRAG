@@ -506,3 +506,70 @@ $ conda run -n RAGRAG python3 -m ragrag.pipeline.numqa grade
 일치). `ragrag/pipeline/numqa.py`(MERGE 교체) · `ragrag/pipeline/facts.py`(MERGE 교체) ·
 `ragrag/out/`(개별 심링크 재구성, shareholders/filings 추가) 커밋 진행. Step 4-b(comparison
 재연결)로 이동.
+
+## Step 4-b — comparison 재연결 (2026-08-19)
+
+### 바꾼 파일
+
+`ragrag/router/execute.py`의 `comparison()`과 그 전용 헬퍼 `_restatement_scan()`만 변경.
+그 외 라우터 파일(`intent_parse.py` 포함 파서 쪽, `frame.py`/`vocab.py`/`resolver.py`/
+`router.py`/`compose.py`/`llm_local.py`/`diagnose.py`)은 전혀 손대지 않음 — 지시대로
+"재연결 지점"으로 변경 범위를 최소화했다.
+
+### 가한 변경
+
+`comparison(frame)`의 필링 탐색 로직을 resolver.resolve()의 supersede pair 조회 +
+`_restatement_scan()`(전체 facts 재스캔) 2단 폴백 구조에서, `ragrag/pipeline/numqa.py`
+(Step 4-a에서 MERGE판으로 교체된)의 `FactStore.lookup_all(corp_code, metric, scope, year,
+include_superseded=False)` 단일 호출로 교체했다. `lookup_all()`은 `FactStore.__init__`이
+이미 (corp_code, metric, scope, statement, year) 키 아래 모든 필링을 rcept_no 오름차순으로
+보존해두므로(문서당 1개, dedupe는 유지) 그 리스트의 처음/끝(`recs[0]`/`recs[-1]`)이 바로
+원공시/최신 값이 된다 — supersede 체인 여부를 따로 조회할 필요가 없어 resolver 호출과
+`_restatement_scan()` 자체를 제거했다(재연결의 직접 대상이라 부수 정리가 아니라고 판단).
+
+`_load_all_facts()`는 `build_store()`가 여전히 쓰므로 유지, `resolver` import도
+`fact_numeric`/`dual`/`compute`/`existence`가 여전히 쓰므로 유지 — 이 두 헬퍼/모듈을
+comparison에서만 뺐다.
+
+출력 dict에서 `used_restatement_fallback`/`resolver`/`low_confidence`/소스의
+`version`·`supersede_method` 필드가 빠졌다 — 전부 "resolver의 supersede pair vs
+restatement_scan 폴백"이라는, 이제 존재하지 않는 구분에 종속된 필드였다(둘 다 하나의
+`lookup_all()` 호출로 흡수됨). intent_parse(질문 파서) 쪽은 지시대로 완전히 무변경.
+
+`git diff ragrag/router/execute.py`로 감사 — 변경이 `comparison()`/`_restatement_scan()`
+블록에만 국한됨을 확인, `fact_numeric`/`dual`/`compute`/`existence`/`narrative`/`run()`/
+`__main__`은 바이트 단위로 무변경.
+
+### 회귀 결과 — 게이트 통과
+
+```
+$ conda run -n RAGRAG python3 -m ragrag.router.diagnose
+$ conda run -n RAGRAG python3 ragrag/eval/grade_all.py
+```
+
+**필수 유지 항목 — 전부 유지됨**:
+- 슬롯 corp/metric/period_year **797/797**, scope **729/729** — 무변화(파서를 안 건드렸으므로 당연)
+- 층B 라우팅 **694/694**, 라우터-프레임 불일치 **0건** — 무변화
+- `grade_all.py` 교차검증: 층B 694/694·층C 259/259·층A 느슨 103/103·엄격 94/103·참고용
+  회귀 8/8 — 4-a 수치 전부 무변화(배선 변경이 pipeline을 오염시키지 않았음 확인)
+
+**측정 결과(§4-1이 재연결 후 기대값을 명시하지 않아 "게이트 실패"가 아니라 "측정 결과"로
+기록)** — 층A comparison: `routed_comparison` **103/103**, **solved_ok 102/103**(Step 3과
+**완전히 동일한 수치**), `used_restatement_fallback` 필드는 출력에서 제거되어 diagnose.py가
+`result.get(...)`로 읽으면 `None`(falsy) → 카운트 0으로 찍힘(필드가 없어진 것이지 폴백이
+실제로 0번 쓰인 게 아님 — 새 백엔드엔 "폴백"이라는 개념 자체가 없다).
+
+**문항 단위 원인(solved_ok 불변 확인)**: 실패 1건은 Step 3과 **동일한 QID `Q50`**
+("세아베스틸지주의 2021년 별도 매출액을 2023년 사업보고서와 2023년 사업보고서(비교표시)에서
+각각 확인하면 값이 일치하는가?", status `no_pair`) — jin 원본이 실패했던 바로 그 문항이 새
+백엔드에서도 같은 이유로 실패한다: 이 케이스는 **같은 rcept_no(같은 문서) 안에 원문/비교표시
+두 값**이 있는데, `FactStore.idx` 구축 시 `by_doc.setdefault(f["doc_id"], f)`로 문서당 값을
+1개만 남기므로(Step 4-a에서 교체된 numqa.py, 무변경 재사용) 같은 문서의 두 번째 값이
+애초에 인덱스에 안 들어간다 — 이 연도에 다른 문서가 없으면 `lookup_all()`이 원소 1개만
+반환해 `len(recs) < 2`로 실패한다. jin 원본도 `_find(doc_id)`가 문서당 1개만 찾는 구조라
+같은 지점에서 막혔던 것과 근본원인이 동일 — **인덱스 설계상 알려진 한계이지 재연결로 새로
+생긴 회귀가 아님**(수정하지 않고 기록만, Step 5·6 몫일 수 있음).
+
+### 상태: **Step 4-b 게이트 통과**(필수 유지 항목 전부 무변화, 측정 항목인 층A solved_ok도
+102/103으로 완전히 동일 — 심지어 실패 문항까지 동일). 커밋 진행, Step 4-c(게이트 체계 전환
+공식화)로 이동.
