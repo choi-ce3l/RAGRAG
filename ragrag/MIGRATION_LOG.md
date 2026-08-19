@@ -573,3 +573,113 @@ $ conda run -n RAGRAG python3 ragrag/eval/grade_all.py
 ### 상태: **Step 4-b 게이트 통과**(필수 유지 항목 전부 무변화, 측정 항목인 층A solved_ok도
 102/103으로 완전히 동일 — 심지어 실패 문항까지 동일). 커밋 진행, Step 4-c(게이트 체계 전환
 공식화)로 이동.
+
+## Step 4-c — 게이트 체계 전환 공식화 (2026-08-19)
+
+코드 변경 없음(§4-2 Step 4 정의가 지시한 두 가지 부대 작업 — QID 대조, §5-1 정책 반영
+확인 — 은 아래처럼 이미 4-a/4-b 산출물로 답이 나와 있어 추가 코드가 필요하지 않았다) +
+정본 게이트 정의 전환 기록.
+
+### QID 단위 대조 — jin 실패 1건(Q50) vs MERGE 실패 9건 (§2-4 "미확인" 항목 해소)
+
+`jin/INTEGRATION_PLAN.md` §2-4가 "미확인"으로 남겨뒀던 질문(jin의 Q50 실패와 MERGE 9건
+실패가 같은 근본원인인지)을 이번에 QID 레벨로 직접 대조했다.
+
+- **`ragrag/router/diagnose.py`(라우터, Step 4-b 재연결 후) 실패 1건**: `Q50`
+  (세아베스틸지주, status `no_pair`)
+- **`ragrag/eval/grade_all.py`(pipeline, Step 4-a MERGE numqa) 엄격 실패 9건**: `Q50, Q51,
+  Q60, Q61, Q62, Q63, Q64, Q65, Q103`(위 회귀 결과 원문 참고)
+
+**대조 결과**: `Q50`은 **두 채점 모두에서 실패**한다 — 세아베스틸지주 2021년 별도 매출액을
+2023년 사업보고서(본문)와 2023년 사업보고서(비교표시)에서 각각 확인해야 하는데, 둘 다
+**같은 rcept_no(20240312000629) 안에 있는 두 값**이라 `FactStore.idx`가 문서당 1개만
+남기는 dedup(Step 4-a에서 교체된 numqa.py, 원본 그대로) 때문에 애초에 인덱스에 두 번째
+값이 안 들어가고, 이 연도의 다른 필링도 없어 "1건만 확인됨"으로 답이 막힌다 —
+**router/pipeline 두 경로 다 근본원인이 동일**(문서내 이중값을 애초에 둘 다 보존하지
+못하는 인덱스 설계의 한계). §2-4의 추정("같은 근본원인일 가능성이 높다")이 이번 대조로
+**사실로 확인됨**.
+
+나머지 8건(`Q51`, `Q60`~`Q65`, `Q103`)은 **router 쪽에서는 실패가 아니다** —
+`routed_comparison 103/103·solved_ok 102/103`이 의미하는 바는 이 8건 모두
+`execute.comparison()`이 `status: "ok"`인 답을 반환했다는 뜻(라우터의 solved_ok는 값의
+정오답이 아니라 "comparison 경로가 답을 만들어냈는가"만 본다 — §5-A-4가 이미 명시한
+"jin=라우팅 도달 여부, MERGE=값 자체의 정오답"이라는 성격 차이 그대로). `grade_all.py`
+결과를 보면 이 8건은 **서로 다른 두 필링에서 값을 찾아 답은 만들었지만, 그 값이 gold와
+다르다**(예: 한전기술 Q60은 접수 20240320001238/20250814001076 두 필링 값을 찾아 반환했으나
+gold(`705,509,290,986`)와 일치하지 않음). 이건 Q50과 **다른 종류의 문제**(인덱스가 값을
+못 찾는 게 아니라, 찾은 값·필링 선택이 gold 기대와 어긋남 — 필링 선택 로직이나 골드셋
+자체의 정합성 문제일 가능성) — 원인을 더 파고들지 않고 **사실만 기록**한다(로직 수정 금지
+원칙, Step 5·6 몫일 가능성).
+
+### §5-A-1 superseded 정책 반영 확인 — 이미 충족됨, 추가 코드 불필요
+
+§4-2 Step 4 정의가 "§5-1(확정) superseded 정책을 FactStore 조회 로직에 명시적으로 반영"을
+Step 4 범위로 명시했으므로(Step 5 이후로 미뤄진 게 아님 — 지시문의 "§4가 Step 5 이후로
+배정했다면 건드리지 말 것" 조건에 해당하지 않아 이번에 판단), 정책 4개 항목을 하나씩
+대조했다:
+
+1. **저장은 전부 보존**: `FactStore.idx`가 `setdefault(...).append(f)`로 같은 키의 모든
+   필링을 모으고, 문서당 1개로만 접는다(§5-1이 요구하는 "이중값은 실패 집계"와 사실상
+   같은 동작 — 아래 4번 참고) — Step 4-a에서 교체된 numqa.py(무변경) 그대로 충족.
+2. **기본 조회는 최신(`is_superseded=false`)**: `FactStore.lookup()`의 기본
+   `policy="latest_valid"`가 `is_superseded=False`로 거른 뒤 rcept_no 최댓값을 반환 —
+   무변경 numqa.py 그대로 충족.
+3. **질문에 버전 신호가 있으면 resolver가 해제**: `fact_numeric`/`dual`/`compute`/
+   `existence` 경로는 여전히 `resolver.resolve(frame)`으로 `frame.version_selector`
+   (`as_of`/`original`/`corrected`/`pair`)를 해석해 doc_id를 좁힌다(Step 4-b에서 손대지
+   않음) — 충족. `comparison`은 Step 4-b에서 resolver 호출을 뺐지만, 이 정책 항목은
+   supersede 체인(정정) 케이스를 겨냥한 것이고 comparison은 애초에 다른 두 문서를 비교하는
+   "재작성" 케이스를 다루므로(§2-4/execute.py 기존 독스트링) 이 항목의 적용 대상이 아니다 —
+   원래부터 jin 설계가 `_restatement_scan()`으로 resolver를 우회했던 것과 같은 이유.
+4. **문서내 이중값은 실패로 집계**: 위 Q50 사례가 바로 이 정책이 실제로 작동하는 증거다 —
+   같은 문서 안의 두 번째 값이 인덱스에서 사라져 "1건만 확인"으로 처리되고, 그 결과
+   `grade_all.py`(all_hit=False)와 `diagnose.py`(status≠ok) 양쪽에서 **의도대로 실패로
+   집계됨**을 확인.
+
+네 항목 모두 Step 4-a(numqa.py/facts.py 교체)와 Step 4-b(comparison 재연결) 산출물에
+**이미 반영돼 있어 추가 코드 변경이 필요 없었다** — MERGE numqa.py 자체가 SHLEE
+Cycle 4(다건보존+latest-valid)의 결과물이고, `lookup_all()` 기반 재연결이 자연스럽게
+"이중값은 실패 집계"를 만족시키기 때문. 코드에 게이트 숫자를 하드코딩하지 않았음(gate
+값은 전부 실행 출력에서만 나옴).
+
+### 정본 게이트 정의 전환 (확정, §5-A-4)
+
+이 시점부터 `ragrag/`의 정본(定本) 회귀 게이트는 다음과 같다 — 이후 모든 회귀 판단은
+이 기준을 따른다:
+
+| 게이트 | 정의 | 채점 스크립트 | 정본 목표값 |
+|---|---|---|---|
+| 층B | `numqa.grade()` | `ragrag/eval/grade_all.py`, `ragrag/pipeline/numqa.py grade` | 694/694 |
+| 층C | `must_contain` any-match(ratio/major/exchange) | `ragrag/eval/grade_all.py::grade_layer_c` | 259/259 |
+| **층A 엄격(정본)** | `all_hit`(gold_values 전부) **AND** `verdict_ok`(재작성 판정 일치) | `ragrag/eval/grade_all.py::grade_layer_a` | **94/103** |
+| 층A 느슨(병기) | `any_hit` | `ragrag/eval/grade_all.py::grade_layer_a` | 103/103(참고 병기, 정본 아님) |
+| 슬롯 | corp/metric/period_year 성공률 | `ragrag/router/diagnose.py` | 797/797 |
+| scope | dual 제외 성공률 | `ragrag/router/diagnose.py` | 729/729 |
+
+- 층A **느슨**은 이제부터 정본이 아니라 참고 병기 항목 — Step 1~3까지는(층A 채점 자체가
+  불가능했거나 jin의 라우팅-도달 여부만 봤으므로) 느슨/solved_ok가 사실상 유일한 층A
+  지표였지만, Step 4부터 grade_all.py가 값의 정오답까지 채점할 수 있게 되어 엄격이
+  대체한다(§5-A-4 결정문 그대로).
+- `ragrag/router/diagnose.py`의 층A `solved_ok`(현재 102/103)는 정본 게이트가 **아니다** —
+  §5-A-4가 이미 "jin=라우팅 도달 여부, MERGE=값의 정오답"이라고 성격을 구분해뒀고, 이번
+  QID 대조로 그 구분이 실제로 다른 걸 측정한다는 게 재확인됐다. 참고 지표로는 계속 기록.
+- 이 표는 문서 기록이며 `ragrag/`의 어떤 코드에도 숫자로 하드코딩하지 않는다(BASELINE.md는
+  Step 1~3용 "이식 전 원본 기준선"으로 그대로 남겨두고, 이 표가 Step 4 이후의 정본 게이트를
+  대체한다 — 별도 게이트 문서 파일은 새로 만들지 않음. §4-1 대응 위치가 이 MIGRATION_LOG
+  Step 4-c 섹션임을 이 문단이 명시).
+
+### 원본 무결성 최종 확인
+
+Step 0 스냅샷(`originals_before.md5`, `choi/`·`jin/`·`SHLEE/`·`data/MERGE/` 아래 211개 파일)
+기준으로 `md5sum -c`를 다시 실행 — **211/211 OK, 실패 0건**(Step 2 이후 이번 Step 4까지
+포함한 전체 작업 기간 동안 원본 4폴더가 바이트 단위로 완전히 그대로임을 확인). 이번
+세션에서 실행한 채점 스크립트는 전부 `ragrag/` 아래 이식본만 실행했고(`ragrag/eval/
+grade_all.py`, `ragrag/pipeline/numqa.py`, `ragrag/router/diagnose.py`), 원본 위치의
+`choi/.../numqa.py`·`data/MERGE/src/grade_all.py`·`jin/router/diagnose.py`는 이번 Step 4에서
+전혀 재실행하지 않아 BASELINE 스크립트 출력 경로 예외 판정조차 필요 없었다.
+
+### 상태: **Step 4 전체(4-a/4-b/4-c) 완료.** 정본 게이트가 층A 엄격 94/103으로 공식
+전환됐고, 층B 694/694·층C 259/259·슬롯 797/797·scope 729/729는 Step 2~3부터 지금까지
+전부 유지 중. 원본 4폴더 무결성 211/211 OK. 코드 변경이 없는 단계라 커밋은 이 로그 기록만
+반영. 이번 태스크 범위는 Step 4까지이며 Step 5(factx.py 비율추출 버그 수정)·Step 6
+(eval.py vacuous-pass 수정)은 지시대로 선반영하지 않음.
