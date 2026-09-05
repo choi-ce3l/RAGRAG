@@ -218,25 +218,28 @@ curl -G "https://49-50-141-164.sslip.io/answer" \
 
 ### 데이터
 
-런타임에 필요한 파일은 **1.37 GB**다. 원본 corpus 전체(4.4GB)를 올릴 필요는 없다.
+런타임에 필요한 파일은 총 **약 7.6 GB**다. 원본 corpus 전체(4.4GB)를 올릴 필요는 없다.
 
-| 파일 | 크기 | 성격 |
+| 파일/폴더 | 크기 | 성격 |
 |---|---|---|
-| `code_chunkingandparsing/out/factstore.jsonl` | 1,087 MB | 원본 — 필수 |
+| `code_chunkingandparsing/out/chunks.jsonl` | 1.1 GB | 원본 — 필수 (`qa/sectors·sections·rcept·chunkstore`가 사용) |
+| `code_chunkingandparsing/out/factstore.jsonl` | 1.1 GB | 원본 — 필수 (`qa/labelstore`) |
+| `code_chunkingandparsing/out/factx.jsonl` | 929 MB | 원본 — 필수 (`qa/fields·structstore`) |
+| `code_chunkingandparsing/out/facts.jsonl` | 136 MB | 원본 — 필수 (`numqa`) |
 | `data/corpus/manifest.jsonl` | 2 MB | 원본 — 필수 |
-| `data/*.jsonl`, `*.json` | 285 MB | 캐시 — 없으면 원본에서 재생성(약 45초) |
+| `data/` 나머지 전부(`tables.db`·`facts.db`·`*.jsonl` 등) | 약 4.5 GB | 캐시 — 아래 참고 |
 
-캐시는 `.gitignore`에 있다. 원본이 있으면 첫 실행 때 자동으로 만들어진다.
+`code_chunkingandparsing/out/tables.jsonl`(1.3GB)은 빌드용 중간 산출물이라 런타임엔 안 쓴다 — 안 받아도 된다.
 
-**선택 사항**: `data/corpus/raw/`(DART 공시목록 원자료, 5GB+)는 없어도 대부분의 질문에
-영향이 없다 — `qa/boolean.py`의 "이 문서가 그 뒤로 또 정정됐는가" 같은 일부 문서-존재
-확인 질의에서만 쓰이고, 없으면 그 부분만 조용히 빈 결과로 넘어간다(`qa/rawcorpus.py`).
-용량 때문에 이번 데이터 패키지엔 포함하지 않았다.
+> ⚠️ **캐시가 전부 자동 재생성되진 않는다.** 예를 들어 `qa/filings.py`가 쓰는
+> `struct_facts.jsonl`이 없으면 서버가 기동 자체를 못 하고 크래시한다(자동 재생성 로직 없음).
+> 그래서 `data/` 폴더는 **통째로** 포함하는 걸 권장한다 — 이 조합 그대로 부팅 테스트를
+> 통과했다(수치조회·주주현황·문서정정확인 세 경로 모두 정상).
 
-**다운로드**: 위 원본 파일들을 압축한 `data.zip`을 받아 위 트리와 같은 경로에 풀어 넣는다.
+**다운로드**: 위 파일들을 압축한 `data.zip`을 받아 "프로젝트 구조"의 트리와 같은 경로에 풀어 넣는다.
 
 - 다운로드 링크: `<TODO: 클라우드 스토리지 공유 링크>`
-- 압축 해제 위치: `code_chunkingandparsing/out/factstore.jsonl`, `data/corpus/manifest.jsonl`
+- 압축 해제 위치: `code_chunkingandparsing/out/*.jsonl`, `data/`(내부에 `corpus/manifest.jsonl` 포함)
 
 ## 배포 및 운영
 
@@ -249,7 +252,7 @@ docker run -p 8000:8000 \
   gongsi-agent
 ```
 
-데이터는 이미지에 넣지 않고 볼륨으로 마운트한다 (원본만 1.4GB라 이미지가 비대해진다).
+데이터는 이미지에 넣지 않고 볼륨으로 마운트한다 (원본만 7.6GB라 이미지가 비대해진다).
 `code_chunkingandparsing`은 `src`(numqa 등)와 `out`(factstore.jsonl 등)을 **폴더째** `/app` 바로
 밑에 마운트해야 한다 — `qa/*.py`가 이 폴더를 레포 루트(컨테이너 안에서는 `/app`)의 형제
 디렉토리로 상대 참조하기 때문에, 다른 경로에 두거나 `src`·`out`을 따로 쪼개서 마운트하면
