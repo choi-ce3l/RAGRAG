@@ -1,10 +1,13 @@
 # 공시 QA 에이전트 — 평가용 API 서버
 #
 # 데이터는 이미지에 넣지 않고 볼륨으로 마운트한다 (1.4GB라 이미지가 비대해진다).
+# qa/*.py가 code_chunkingandparsing을 "컨테이너 루트의 형제 디렉토리"로 상대 참조하므로
+# (예: qa/labelstore.py의 factstore.jsonl 경로) code_chunkingandparsing 폴더 전체를
+# 그대로 컨테이너 루트에 마운트해야 한다 — src/out을 따로 쪼개서 마운트하면 깨진다.
 #   docker build -t gongsi-agent .
 #   docker run -p 8000:8000 \
-#     -v /path/to/out:/data/out:ro \
-#     -v /path/to/corpus:/data/corpus:ro \
+#     -v /path/to/code_chunkingandparsing:/code_chunkingandparsing:ro \
+#     -v /path/to/data/corpus:/data/corpus:ro \
 #     -v /path/to/공시_agent/data:/app/data \
 #     gongsi-agent
 
@@ -24,7 +27,7 @@ COPY web/ ./web/
 COPY server.py mcp_server.py ./
 
 # 기존 자산(numqa 등)은 볼륨으로 마운트해 import 경로에 둔다
-ENV PYTHONPATH=/app:/data/src
+ENV PYTHONPATH=/app:/code_chunkingandparsing/src
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000

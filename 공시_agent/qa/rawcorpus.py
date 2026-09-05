@@ -20,7 +20,7 @@ PDF+viewer_html로만 존재해 struct_facts에 없다. `qa/filings.py`의
 
 ## 경계
 
-이 raw 코퍼스는 choi/공시_agent가 만든 것이 아니라 프로젝트 공용 데이터
+이 raw 코퍼스는 공시_agent가 만든 것이 아니라 프로젝트 공용 데이터
 (`/home/dslab/RAGRAG/data/corpus/raw`)다. 이 모듈은 그 데이터를 읽기만 하고
 쓰지 않는다. 디렉터리·기업 폴더가 없으면 조용히 빈 결과를 돌려준다 — 이
 프로젝트가 그 데이터의 존재를 보장하지 않기 때문이다.

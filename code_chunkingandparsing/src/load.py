@@ -15,12 +15,12 @@ import os
 import unicodedata
 
 # 이 파일 기준으로 repo 루트의 data/corpus 를 찾는다.
-# src -> code_chunkingandparsing -> choi -> repo루트, 그 아래 data/corpus.
+# src -> code_chunkingandparsing -> repo루트, 그 아래 data/corpus.
 # 환경변수 RAGRAG_CORPUS_ROOT 로 재정의 가능(다른 위치에 두고 쓸 때).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 CORPUS_ROOT = os.environ.get(
     "RAGRAG_CORPUS_ROOT",
-    os.path.normpath(os.path.join(_HERE, "..", "..", "..", "data", "corpus")),
+    os.path.normpath(os.path.join(_HERE, "..", "..", "data", "corpus")),
 )
 
 

@@ -2,7 +2,7 @@
 """
 공시 QA 에이전트 평가 파이프라인 (뼈대)
 
-로컬에 이미 존재하는 choi/code_chunkingandparsing/src/eval.py 를 기반으로 한다:
+로컬에 이미 존재하는 code_chunkingandparsing/src/eval.py 를 기반으로 한다:
   - evaluate(search_name, k)  : hit@1/5/10 (검색이 gold 섹션을 잡는지)
   - answer_eval()             : must_contain / must_not_contain 규칙 채점 (LLM-judge 아님)
 
@@ -17,7 +17,7 @@
 TODO:
     - [ ] 데이터셋 로드 및 형식 검증 (validate_dataset) — 질문/정답/근거좌표 필드 확인
     - [ ] QA 에이전트 파이프라인 호출 연결 (run_qa_pipeline)
-          -> 우선은 choi/code_chunkingandparsing/src/rag.py 의 answer()/eval.py 의
+          -> 우선은 code_chunkingandparsing/src/rag.py 의 answer()/eval.py 의
              evaluate()/answer_eval() 재사용, 이후 01~05 서브에이전트가 실제 분리되면 교체
     - [ ] 문항별 채점 로직: 정확도(answer_eval의 must_contain 방식 참고) /
           서브에이전트 단계별 오류(현재는 미구현 — 파이프라인이 아직 단일 rag.answer() 호출) /
@@ -30,9 +30,10 @@ import argparse
 import sys
 from pathlib import Path
 
-# choi/code_chunkingandparsing/src 를 import 경로에 추가해 기존 rag.py/eval.py 재사용
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-_LEGACY_SRC = _REPO_ROOT / "choi" / "code_chunkingandparsing" / "src"
+# code_chunkingandparsing/src 를 import 경로에 추가해 기존 rag.py/eval.py 재사용
+# (공시_agent와 code_chunkingandparsing은 형제 디렉토리 — README.md "저장소 구성" 참고)
+_AGENT_ROOT = Path(__file__).resolve().parent.parent
+_LEGACY_SRC = _AGENT_ROOT.parent / "code_chunkingandparsing" / "src"
 if str(_LEGACY_SRC) not in sys.path:
     sys.path.insert(0, str(_LEGACY_SRC))
 

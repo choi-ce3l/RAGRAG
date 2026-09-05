@@ -8,7 +8,7 @@
 ## 저장소 구성
 
 ```
-choi/
+(레포 루트)
 ├── 공시_agent/                    (이 README가 있는 곳)
 │   ├── qa/                       파이프라인 모듈
 │   ├── server.py                 HTTP API
@@ -19,7 +19,7 @@ choi/
     └── out/factstore.jsonl        원본 팩트 데이터 — 별도 다운로드 (아래 "데이터" 참고)
 ```
 
-`공시_agent/`와 `code_chunkingandparsing/`은 **같은 부모 디렉토리 아래 형제로 둬야 한다** —
+`공시_agent/`와 `code_chunkingandparsing/`은 **레포 루트 기준으로 형제 디렉토리여야 한다** —
 `qa/*.py`가 `../code_chunkingandparsing/src`, `.../out`을 상대 경로로 참조하기 때문이다
 (`qa/kg.py`의 `import numqa` 등).
 
@@ -171,7 +171,7 @@ curl -X POST http://<HOST>:8000/ask \
 docker build -t gongsi-agent .
 
 docker run -p 8000:8000 \
-  -v /path/to/code_chunkingandparsing/out:/data/out:ro \
+  -v /path/to/code_chunkingandparsing:/code_chunkingandparsing:ro \
   -v /path/to/data/corpus:/data/corpus:ro \
   -v /path/to/공시_agent/data:/app/data \
   gongsi-agent
@@ -179,6 +179,9 @@ docker run -p 8000:8000 \
 
 데이터는 이미지에 넣지 않고 볼륨으로 마운트한다 (원본만 1.4GB라 이미지가 비대해진다).
 위 "데이터"에서 받은 파일을 호스트에 풀어 넣고 그 경로를 `-v`로 연결하면 된다.
+`code_chunkingandparsing`은 `src`(numqa 등)와 `out`(factstore.jsonl 등)을 **폴더째** 마운트해야
+한다 — `qa/*.py`가 이 폴더를 컨테이너 루트의 형제 디렉토리로 상대 참조하기 때문에, `src`·`out`을
+따로 쪼개서 마운트하면 경로를 못 찾는다.
 색인 로드에 12초가 걸리는 동안 `/health`는 `ready:false`를 돌려주며, `HEALTHCHECK`가
 `ready:true`가 될 때까지 컨테이너를 `starting` 상태로 유지한다.
 

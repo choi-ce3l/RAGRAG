@@ -17,7 +17,7 @@ MCP SDK를 쓰지 않는다. MCP는 stdio 위의 JSON-RPC 2.0이라 `mcp_server.
 ## 등록
 ```
 claude mcp add gongsi -- /home/dslab/anaconda3/envs/RAGRAG/bin/python \
-  /home/dslab/RAGRAG/choi/공시_agent/mcp_server.py
+  /path/to/공시_agent/mcp_server.py
 ```
 
 또는 프로젝트 루트 `.mcp.json`에:
@@ -26,7 +26,7 @@ claude mcp add gongsi -- /home/dslab/anaconda3/envs/RAGRAG/bin/python \
   "mcpServers": {
     "gongsi": {
       "command": "/home/dslab/anaconda3/envs/RAGRAG/bin/python",
-      "args": ["/home/dslab/RAGRAG/choi/공시_agent/mcp_server.py"]
+      "args": ["/path/to/공시_agent/mcp_server.py"]
     }
   }
 }

@@ -1,8 +1,0 @@
-# CQ7 — 커버리지: "재고자산 계정을 보고한 기업은 이 샘플에서 몇 개인가?"
-# coverageCount는 표본이 아니라 전체 코퍼스(213,694 facts) 기준 실측치다 — concepts.py의
-# ConceptIndex를 전체 코퍼스로 만들었기 때문(§6 설계 의도, build_abox_sample.py 참고).
-PREFIX dart: <http://dart-ontology.example.org/schema#>
-
-SELECT ?n WHERE {
-  ?item dart:canonicalLabel "재고자산"@ko ; dart:coverageCount ?n .
-}
