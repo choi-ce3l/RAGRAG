@@ -153,7 +153,7 @@ def by_sector(single, store, labels):
 def main():
     ap = argparse.ArgumentParser(description="온톨로지 오버핏 측정")
     ap.add_argument("--folds", type=int, default=5)
-    ap.add_argument("--dataset", default="/home/dslab/RAGRAG/choi/benchmarks/dataset/qa_gold.jsonl")
+    ap.add_argument("--dataset", default="data/eval_datasets/qa_gold.jsonl")
     ap.add_argument("-o", "--out", default="data/eval_reports/holdout.json")
     a = ap.parse_args()
 

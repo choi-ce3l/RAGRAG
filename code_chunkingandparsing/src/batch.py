@@ -7,7 +7,7 @@ manifest 4,204건 전체를 enrich(chunk.py)에 태워 JSONL 2종으로 스트�
 - out/summary.json : 집계
 
 메모리 폭발을 막기 위해 문서 단위로 즉시 파일에 flush 한다(전량 적재 안 함).
-실행: /home/dslab/anaconda3/envs/RAGRAG/bin/python batch.py
+실행: conda run -n RAGRAG python batch.py
 """
 import json
 import os

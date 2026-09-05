@@ -13,17 +13,19 @@ PDF+viewer_html로만 존재해 struct_facts에 없다. `qa/filings.py`의
 `Filings.chain()`으로 이 계열을 조회하면 정정본 2건만 보여 "그 뒤로 추가 정정
 없음"이라는 잘못된 결론이 나올 위험이 있다(SEM-EVT-08).
 
-원문 raw 코퍼스(`/home/dslab/RAGRAG/data/corpus/raw/{periodic,major,...}/
-<기업명>/list_*.json`)는 DART 공시목록 API 원자료를 그대로 담고 있어 이 빈틈이
+원문 raw 코퍼스(`data/corpus/raw/{periodic,major,...}/<기업명>/list_*.json`,
+레포 루트 기준)는 DART 공시목록 API 원자료를 그대로 담고 있어 이 빈틈이
 없다. 이 모듈은 그 원자료를 **읽기 전용**으로 조회해 공시 유형·날짜·접수번호만
 돌려준다 — 계산도 판단도 하지 않는다(판단은 호출부인 qa/boolean.py가 한다).
 
 ## 경계
 
 이 raw 코퍼스는 공시_agent가 만든 것이 아니라 프로젝트 공용 데이터
-(`/home/dslab/RAGRAG/data/corpus/raw`)다. 이 모듈은 그 데이터를 읽기만 하고
+(레포 루트의 `data/corpus/raw`, 5GB+로 커서 이번 제출 데이터 패키지엔 포함하지
+않음 — README.md "데이터" 참고)다. 이 모듈은 그 데이터를 읽기만 하고
 쓰지 않는다. 디렉터리·기업 폴더가 없으면 조용히 빈 결과를 돌려준다 — 이
-프로젝트가 그 데이터의 존재를 보장하지 않기 때문이다.
+프로젝트가 그 데이터의 존재를 보장하지 않기 때문이다(boolean.py의 "문서 존재
+확인" 질의만 이 데이터 없이는 답을 못 낸다 — 그 외 경로엔 영향 없음).
 """
 
 import json
@@ -31,7 +33,8 @@ import re
 import unicodedata
 from pathlib import Path
 
-RAW_BASE = Path("/home/dslab/RAGRAG/data/corpus/raw")
+_HERE = Path(__file__).resolve().parent
+RAW_BASE = _HERE.parent.parent / "data" / "corpus" / "raw"
 CATEGORIES = ("periodic", "major", "holding", "exchange")
 
 # 정정 표기(대괄호 블록)를 뗀 기준 이름. qa/filings.py의 _BRACKET·base_name과

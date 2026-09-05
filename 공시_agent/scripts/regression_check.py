@@ -36,9 +36,11 @@ from evaluation import evaluate as evaluate_mod  # noqa: E402
 REPORT_DIR = PROJECT_ROOT / "data" / "eval_reports"
 BASELINE_DIR = PROJECT_ROOT / "data" / "regression_baseline"
 
+# 개발 환경 전용 골드셋 — 이번 제출 데이터 패키지엔 없다. 로컬에서 쓰려면
+# 아래 경로에 각자 골드셋을 두거나 PROJECT_ROOT 기준 상대경로를 조정한다.
 DATASETS = {
-    "SHLEE": Path("/home/dslab/RAGRAG/SHLEE/정답 DATASET 제작/지시파일/gold/qa_gold_final.json"),
-    "FIN": Path("/home/dslab/RAGRAG/choi/benchmarks/dataset/qa_gold.jsonl"),
+    "SHLEE": PROJECT_ROOT / "data" / "eval_datasets" / "qa_gold_final.json",
+    "FIN": PROJECT_ROOT / "data" / "eval_datasets" / "qa_gold.jsonl",
 }
 
 FIELDS = ("정확", "근거", "행동")
