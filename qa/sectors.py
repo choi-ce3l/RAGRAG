@@ -13,7 +13,7 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 CACHE = _HERE.parent / "data" / "sector_index.json"
-CHUNKS = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
+CHUNKS = _HERE.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
 
 # 업종 지시어가 함께 있어야 업종 확장을 켠다. "통신비" 같은 오탐을 막는다.
 MARKERS = ("업종", "섹터", "산업", "분야")

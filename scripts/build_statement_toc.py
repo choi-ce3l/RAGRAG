@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-CHUNKS = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
+CHUNKS = _HERE.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
 OUT = _HERE.parent / "data" / "statement_toc_index.json"
 
 # 구체적인 것부터 — "포괄손익계산서"는 "손익계산서"를 부분어로 포함하므로 먼저 봐야 한다.

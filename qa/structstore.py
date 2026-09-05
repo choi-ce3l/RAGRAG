@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-FACTX = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "factx.jsonl"
+FACTX = _HERE.parent / "code_chunkingandparsing" / "out" / "factx.jsonl"
 DATA = _HERE.parent / "data"
 CACHE = DATA / "struct_facts.jsonl"
 OFFSETS = DATA / "struct_offsets.json"
@@ -101,7 +101,7 @@ def get(ontology=None, rebuild=False):
     if _STORE is not None and not rebuild:
         return _STORE
     import sys
-    src = _HERE.parent.parent / "code_chunkingandparsing" / "src"
+    src = _HERE.parent / "code_chunkingandparsing" / "src"
     if str(src) not in sys.path:
         sys.path.insert(0, str(src))
     import load                                          # noqa: PLC0415

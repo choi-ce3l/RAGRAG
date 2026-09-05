@@ -16,7 +16,7 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 CACHE = _HERE.parent / "data" / "section_index.json"
-CHUNKS = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
+CHUNKS = _HERE.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
 
 _LEAD = re.compile(r"^\s*[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩⅪⅫIVXivx\d]+\s*[.)]\s*")
 _BRACKET = re.compile(r"[【】\[\]()]")

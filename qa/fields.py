@@ -20,7 +20,7 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 CACHE = _HERE.parent / "data" / "field_ontology.json"
-FACTX = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "factx.jsonl"
+FACTX = _HERE.parent / "code_chunkingandparsing" / "out" / "factx.jsonl"
 
 _IDX_SUFFIX = re.compile(r"#\d+$")
 _PAREN = re.compile(r"\s*\([^)]*\)\s*$")
@@ -96,7 +96,7 @@ def clean_label(s):
 
 def _build():
     import sys
-    src = _HERE.parent.parent / "code_chunkingandparsing" / "src"
+    src = _HERE.parent / "code_chunkingandparsing" / "src"
     if str(src) not in sys.path:
         sys.path.insert(0, str(src))
     import load                                          # noqa: PLC0415

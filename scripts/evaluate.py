@@ -33,7 +33,7 @@ from pathlib import Path
 # code_chunkingandparsing/src 를 import 경로에 추가해 기존 rag.py/eval.py 재사용
 # (공시_agent와 code_chunkingandparsing은 형제 디렉토리 — README.md "저장소 구성" 참고)
 _AGENT_ROOT = Path(__file__).resolve().parent.parent
-_LEGACY_SRC = _AGENT_ROOT.parent / "code_chunkingandparsing" / "src"
+_LEGACY_SRC = _AGENT_ROOT / "code_chunkingandparsing" / "src"
 if str(_LEGACY_SRC) not in sys.path:
     sys.path.insert(0, str(_LEGACY_SRC))
 

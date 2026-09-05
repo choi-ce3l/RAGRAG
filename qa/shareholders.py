@@ -37,7 +37,7 @@ _HERE = Path(__file__).resolve().parent
 # 먼저 찾고, 없으면(로컬 개발 환경) 원래 ragrag/out/ 경로로 돌아간다 — 두 원본
 # 다 손대지 않는다는 원칙은 그대로 지킨다.
 _LOCAL_COPY = _HERE.parent / "data" / "shareholders.jsonl"
-_RAGRAG_SOURCE = _HERE.parent.parent.parent / "ragrag" / "out" / "shareholders.jsonl"
+_RAGRAG_SOURCE = _HERE.parent / "ragrag" / "out" / "shareholders.jsonl"
 SOURCE = _LOCAL_COPY if _LOCAL_COPY.exists() else _RAGRAG_SOURCE
 
 TRIGGER = re.compile(r"최대주주|특별관계자|특수관계자|지분율")

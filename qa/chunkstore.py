@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-SOURCE = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
+SOURCE = _HERE.parent / "code_chunkingandparsing" / "out" / "chunks.jsonl"
 CACHE = _HERE.parent / "data" / "narrative_chunks.jsonl"
 DF_CACHE = _HERE.parent / "data" / "narrative_df.json"
 MIN_DF = 3          # 한 번만 나오는 토큰은 idf 계산에 필요 없다 — 색인을 가볍게 유지

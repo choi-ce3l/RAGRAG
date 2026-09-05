@@ -10,6 +10,6 @@ narrative 경로(서술형 질문)는 아직 붙지 않았다 — 상태 S6으�
 import sys
 from pathlib import Path as _Path
 
-_SRC = _Path(__file__).resolve().parent.parent.parent / "code_chunkingandparsing" / "src"
+_SRC = _Path(__file__).resolve().parent.parent / "code_chunkingandparsing" / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))

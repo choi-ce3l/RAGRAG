@@ -31,7 +31,7 @@ def _better(new, old):
     return str(new.get("rcept_no") or "") > str(old.get("rcept_no") or "")
 
 _HERE = Path(__file__).resolve().parent
-SOURCE = _HERE.parent.parent / "code_chunkingandparsing" / "out" / "factstore.jsonl"
+SOURCE = _HERE.parent / "code_chunkingandparsing" / "out" / "factstore.jsonl"
 CACHE = _HERE.parent / "data" / "labelstore.jsonl"
 # 분기·반기까지 담은 fact DB. 없으면 예전 JSONL 캐시로 돌아간다.
 DB = _HERE.parent / "data" / "facts.db"

@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT))
 
 from qa import concepts, events_vocab, labelstore, llmparse, pipeline, sectors   # noqa: E402
 
-GOLD_ROOT = ROOT.parent / "code_chunkingandparsing"
+GOLD_ROOT = ROOT / "code_chunkingandparsing"
 EVENTS_JSON = ROOT / "data" / "eval_reports" / "details_gen_gold_events.json"
 OUT_DIR = ROOT / "data" / "llmparse_tuning"
 

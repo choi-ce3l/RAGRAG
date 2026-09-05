@@ -34,7 +34,7 @@ import unicodedata
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-RAW_BASE = _HERE.parent.parent / "data" / "corpus" / "raw"
+RAW_BASE = _HERE.parent / "data" / "corpus" / "raw"
 CATEGORIES = ("periodic", "major", "holding", "exchange")
 
 # 정정 표기(대괄호 블록)를 뗀 기준 이름. qa/filings.py의 _BRACKET·base_name과
