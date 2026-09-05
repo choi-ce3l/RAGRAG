@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공시 QA 에이전트</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --card:#fff; --raised:#EEF0F4; --ink:#12161C; --body:#39414E;
+    --slate:#5D6674; --faint:#8B94A3; --rule:#E0E4EA; --rule2:#C6CDD8;
+    --accent:#1F5FA8; --accent-bg:#E8F0FA;
+    --user-bg:#1F5FA8; --user-ink:#fff;
+    --s0:#1F7A4D; --s0bg:#E5F2EB; --s1:#5D6674; --s1bg:#EDEFF2;
+    --s2:#9A6410; --s2bg:#FAF0DF; --s3:#1F5FA8; --s3bg:#E8F0FA;
+    --s6:#7A5099; --s6bg:#F1EAF6;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0D1015; --card:#151A21; --raised:#1C222B; --ink:#E8ECF2; --body:#CBD2DC;
+    --slate:#98A2B1; --faint:#6B7484; --rule:#252C36; --rule2:#374050;
+    --accent:#79ADE8; --accent-bg:#14243A;
+    --user-bg:#26364A; --user-ink:#E8ECF2;
+    --s0:#65C495; --s0bg:#122419; --s1:#98A2B1; --s1bg:#1B2029;
+    --s2:#D9A44F; --s2bg:#2A2113;
+    --s3:#79ADE8; --s3bg:#14243A; --s6:#B692D4; --s6bg:#221A2C;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--body);
+       font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+       line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:44rem;margin:0 auto;padding:1.6rem 1.1rem 9rem;min-height:100vh}
+  header{margin-bottom:1.1rem;position:sticky;top:0;background:var(--bg);padding:.2rem 0 .8rem;z-index:5}
+  .hrow{display:flex;align-items:center;gap:.6rem}
+  .avatar{width:2.1rem;height:2.1rem;border-radius:50%;background:linear-gradient(135deg,var(--accent),#7A5099);
+          display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex:none}
+  h1{font-size:1.2rem;font-weight:700;color:var(--ink);margin:0}
+  .sub{font-size:.82rem;color:var(--faint);margin-top:.15rem}
+  .status{font-family:ui-monospace,monospace;font-size:.7rem;color:var(--faint);margin-top:.5rem;
+           display:flex;align-items:center}
+  .dot{display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--s1);margin-right:.35rem;flex:none}
+  .dot.on{background:var(--s0);box-shadow:0 0 0 3px var(--s0bg)}
+
+  .empty{padding:2.2rem 0;color:var(--faint);font-size:.88rem;text-align:center}
+
+  /* scrollIntoView(block:"end")는 화면 하단에 딱 붙이는데, 독(입력창)이
+     fixed로 그 위에 얹혀 있어 답변 끝부분이 독 뒤로 가려졌다(스크롤이
+     끝까지 안 내려간 것처럼 보임) — scroll-margin-bottom으로 독 높이만큼
+     여유를 준다. */
+  .turn{margin-bottom:1.6rem;animation:rise .25s ease both;scroll-margin-bottom:7rem}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .u{display:flex;justify-content:flex-end;margin-bottom:.55rem}
+  .ububble{background:var(--user-bg);color:var(--user-ink);padding:.6rem .95rem;border-radius:1.1rem 1.1rem .2rem 1.1rem;
+           font-size:.94rem;max-width:80%}
+
+  .arow{display:flex;gap:.6rem;align-items:flex-start}
+  .avatar.sm{width:1.7rem;height:1.7rem;font-size:.85rem;margin-top:.1rem}
+  .abody{flex:1;min-width:0}
+
+  .think{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.6rem}
+  .step{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--faint);
+        opacity:0;animation:stepin .35s ease forwards}
+  @keyframes stepin{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+  .step .ic{width:1.3rem;text-align:center;flex:none}
+  .step .tx{color:var(--slate)}
+  .step .tx b{color:var(--ink);font-weight:600}
+  .step .note{color:var(--faint);font-size:.78rem}
+  .step.busy .ic{animation:sp 1s linear infinite;display:inline-block}
+  .step.done .ic{animation:none}
+
+  .card{background:var(--card);border:1px solid var(--rule);padding:1.05rem 1.15rem;margin-bottom:.7rem;border-radius:.6rem}
+  .badge{display:inline-block;font-family:ui-monospace,monospace;font-size:.7rem;font-weight:600;
+         padding:.16rem .5rem;margin-bottom:.6rem;border-radius:.3rem}
+  .answer{font-size:1.02rem;color:var(--ink);line-height:1.75}
+  .answer strong{font-weight:700;color:var(--ink)}
+  .answer sup.cite{color:var(--faint);font-size:.72em;font-weight:400}
+  .meta{font-family:ui-monospace,monospace;font-size:.72rem;color:var(--faint);margin-top:.7rem}
+
+  h2{font-size:.7rem;font-family:ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--faint);margin:0 0 .65rem;font-weight:600}
+  .ev{border-left:2px solid var(--rule2);padding:.1rem 0 .1rem .8rem;margin-bottom:.85rem}
+  .ev:last-child{margin-bottom:0}
+  .ev .t{color:var(--ink);font-weight:600;font-size:.9rem}
+  .ev .p{font-size:.86rem;color:var(--body)}
+  .ev .id{font-family:ui-monospace,monospace;font-size:.71rem;color:var(--faint);word-break:break-all}
+  .ev .q{font-size:.83rem;color:var(--body);font-style:italic;margin:.15rem 0}
+  .ans-table-wrap{overflow-x:auto;margin:.6rem 0}
+  .ans-table{border-collapse:collapse;width:100%;font-size:.88rem}
+  .ans-table th,.ans-table td{border:1px solid var(--rule2);padding:.4rem .6rem;text-align:right;white-space:nowrap}
+  .ans-table th:first-child,.ans-table td:first-child{text-align:left}
+  .ans-table th{background:var(--s1bg);color:var(--ink);font-weight:600}
+  .flag{font-size:.71rem;color:var(--s2);margin-left:.3rem}
+
+  .chk{display:flex;gap:.5rem;font-size:.85rem;padding:.12rem 0}
+  .chk .n{color:var(--ink);min-width:9rem}
+  .chk .d{color:var(--slate)}
+  pre{font-family:ui-monospace,monospace;font-size:.76rem;background:var(--raised);
+      border:1px solid var(--rule);padding:.7rem .85rem;margin:0;overflow-x:auto;
+      white-space:pre-wrap;color:var(--ink);line-height:1.6;border-radius:.4rem}
+  details{margin-top:.5rem}
+  summary{cursor:pointer;font-size:.81rem;color:var(--accent);user-select:none}
+  .err{color:var(--s2)}
+  .spin{display:inline-block;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .copybtn{font:inherit;font-size:.72rem;padding:.22rem .55rem;margin-left:.5rem;cursor:pointer;
+      border-radius:.9rem;background:var(--raised);color:var(--slate);border:1px solid var(--rule);
+      vertical-align:middle}
+  .copybtn:hover{border-color:var(--accent);color:var(--accent)}
+  .copybtn.done{color:var(--s0);border-color:var(--s0)}
+  .evline{font-size:.82rem;color:var(--slate);margin-top:.55rem}
+  .confline{font-size:.78rem;color:var(--slate);margin-top:.4rem}
+
+  .memchip{display:inline-flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--slate);
+      background:var(--accent-bg);border:1px solid var(--rule);padding:.24rem .6rem .24rem .7rem;
+      border-radius:1rem;margin-bottom:.5rem}
+  .memchip b{color:var(--accent);font-weight:600}
+  .memchip .x{cursor:pointer;color:var(--faint);font-weight:700;padding:0 .15rem}
+  .memchip .x:hover{color:var(--s2)}
+
+  .dock{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(var(--bg-transparent,transparent),var(--bg) 30%);
+        padding:1rem 1.1rem 1.3rem}
+  .dockinner{max-width:44rem;margin:0 auto}
+  /* 예시 질문 7개를 줄바꿈으로 늘어놓으면 독(dock) 높이가 들쭉날쭉해져서
+     답변 스크롤이 입력창에 가려 끝까지 안 내려가는 문제가 있었다 — 한 줄
+     가로 슬라이드로 바꿔 독 높이를 고정한다. */
+  .chips{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:.35rem;margin-bottom:.6rem;
+         scrollbar-width:none;-ms-overflow-style:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;font-size:.77rem;padding:.26rem .58rem;background:var(--card);color:var(--slate);
+        border:1px solid var(--rule);cursor:pointer;border-radius:1rem;white-space:nowrap}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  form{display:flex;gap:.5rem}
+  input[type=text]{flex:1;font:inherit;font-size:.96rem;padding:.7rem 1rem;
+      background:var(--card);color:var(--ink);border:1px solid var(--rule2);border-radius:1.4rem;
+      box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  input[type=text]:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+  button{font:inherit;font-size:1rem;width:2.7rem;cursor:pointer;border-radius:50%;
+      background:var(--accent);color:#fff;border:1px solid var(--accent);font-weight:600;flex:none}
+  button:disabled{opacity:.5;cursor:default}
+</style></head><body>
+<div class="wrap">
+  <header>
+    <div class="hrow">
+      <div class="avatar">🧭</div>
+      <div>
+        <h1>공시 QA 에이전트</h1>
+        <div class="sub">질문을 스스로 해석하고, 검색·계산·검증을 거쳐 근거와 함께 답합니다.</div>
+      </div>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="stat">상태 확인 중…</span></div>
+  </header>
+
+  <div id="out"><div class="empty">아래에 질문을 입력하거나 예시를 눌러보세요.</div></div>
+</div>
+
+<div class="dock"><div class="dockinner">
+  <div id="mem"></div>
+  <div class="chips" id="chips"></div>
+  <form id="f">
+    <input type="text" id="q" placeholder="예) 삼성전자의 2024년 연결 매출액은?" autocomplete="off">
+    <button id="go" aria-label="질문">➤</button>
+  </form>
+</div></div>
+
+<script>
+const SAMPLES = [
+  "삼성전자의 2024년 연결 매출액은?",
+  "CJ제일제당의 2025년 연결 영업이익은 전년 대비 몇 % 증가했는가?",
+  "통신 업종에서 2023년 연결 투자부동산이 큰 순서대로",
+  "SK텔레콤 별도 무형자산 2021~2023 추이와 CAGR",
+  "현대건설과 대우건설의 2023년 연결 부채비율을 비교해줘",
+  "SK하이닉스 현금흐름 어때",
+  "삼성전자 임원 보수는?",
+];
+const SBG = {S0:["var(--s0)","var(--s0bg)","정상"],S1:["var(--s1)","var(--s1bg)","데이터 없음"],
+             S2:["var(--s2)","var(--s2bg)","검증 미흡"],S3:["var(--s3)","var(--s3bg)","되물음"],
+             S6:["var(--s6)","var(--s6bg)","미지원"]};
+const STAGE_ICON = {"01":"🧭","02":"🔍","03":"🧮","04":"✅","05":"✍️"};
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// DART(전자공시시스템) 원문 뷰어 URL. rcept_no(접수번호) 하나면 어느 회사·어느
+// 보고서든 이 패턴으로 고정 — DART 자체가 공시서류 링크를 이 형태로 발급한다.
+const dartUrl = rcpNo => `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${encodeURIComponent(rcpNo)}`;
+// glossary.py·verdict.py·narrative.py 경로는 LLM이 답을 만들어서 **굵게**·번호
+// 목록 같은 마크다운을 그대로 텍스트에 남길 때가 있다 — 별표·번호가 안 꾸며진
+// 채 화면에 그대로 찍히면 지저분하다. esc()로 먼저 이스케이프한 뒤에만 태그를
+// 만들어 붙인다 — 원문에 <script> 같은 게 섞여 와도 이스케이프된 문자로 남는다.
+function mdToHtml(s){
+  let h = esc(s);
+  h = h.replace(/\n/g, "<br>");
+  // "...다음과 같습니다. 1. **DRAM**: ..."처럼 문장 중간에 번호목록이 이어지면
+  // 항목마다 줄을 나눈다. "3.5%"처럼 소수는 점 뒤에 공백이 없어 안 걸린다.
+  h = h.replace(/(\S)(\s)(\d{1,2}\.\s+)(?=\*\*|[가-힣A-Za-z0-9])/g, "$1<br><br>$3");
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  h = h.replace(/\[(\d{1,2})\]/g, '<sup class="cite">[$1]</sup>');
+  return h;
+}
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+$("chips").innerHTML = SAMPLES.map(s=>`<span class="chip">${esc(s)}</span>`).join("");
+$("chips").onclick = e => { if(e.target.classList.contains("chip")){ $("q").value=e.target.textContent; $("f").requestSubmit(); } };
+
+async function health(){
+  try{
+    const h = await (await fetch("/health")).json();
+    $("dot").className = "dot" + (h.ready?" on":"");
+    $("stat").textContent = h.ready ? "" : "색인 로딩 중… 잠시 후 다시 시도하세요";
+    if(!h.ready) setTimeout(health, 2000);
+  }catch{ $("stat").textContent="서버에 연결할 수 없습니다"; }
+}
+health();
+
+let firstTurn = true;
+$("f").onsubmit = async e => {
+  e.preventDefault();
+  const q = $("q").value.trim(); if(!q) return;
+  $("q").value = ""; $("go").disabled = true;
+  if(firstTurn){ $("out").innerHTML = ""; firstTurn = false; }
+  await runTurn(q);
+  $("go").disabled = false;
+};
+
+// ── 경량 메모리 — 직전 질문 원문을 서버에 같이 보낸다 ─────────────────────
+// 처음엔 "직전 회사명을 다음 질문 앞에 붙이기"로 했는데, "건설사에서 매출
+// 1위는?" 다음 "반도체 분야에서는?"처럼 **업종을 바꿔 같은 걸 다시 묻는**
+// 경우 옛 회사 3개를 그대로 우겨넣어 꼬였다(실측 확인). 회사명만 이어붙이는
+// 걸로는 "같은 질문 틀 + 다른 대상"을 표현할 수 없다 — 그래서 원문 그대로
+// 넘기고, 후속인지 완전히 새 질문인지는 서버(llmparse)가 HCX로 판단한다.
+let lastQuestion = null;
+// 직전 "확정턴"(S0/S2)의 기업·지표·연도 슬롯 — pipeline.py의 prev_slots
+// 인터페이스가 요구하는 형태 그대로 서버가 돌려준 걸 다음 요청에 그대로 실어
+// 보낸다. lastQuestion과 달리 실패턴(S1/S3/S6)에서는 서버가 slots를 null로
+// 주므로, 그럴 땐 갱신하지 않고 이전 값을 계속 들고 있는다 — 중간에 못 알아들은
+// 턴 하나가 끼어도("그건 뭐야?" 같은 딴 길로 샌 질문) 그 전의 확정 맥락을
+// 잃지 않게 하기 위함이다.
+let lastSlots = null;
+function renderMem(){
+  $("mem").innerHTML = lastQuestion
+    ? `<div class="memchip">🧠 직전 질문 참고 중<span class="x" onclick="clearMem()">✕</span></div>`
+    : "";
+}
+function clearMem(){ lastQuestion = null; lastSlots = null; renderMem(); }
+
+async function runTurn(q){
+  const turn = document.createElement("div");
+  turn.className = "turn";
+  turn.innerHTML = `
+    <div class="u"><div class="ububble">${esc(q)}</div></div>
+    <div class="arow"><div class="avatar sm">🧭</div><div class="abody">
+      <div class="think" id="think"></div>
+      <div class="result"></div>
+    </div></div>`;
+  $("out").appendChild(turn);
+  turn.scrollIntoView({behavior:"smooth", block:"end"});
+  const think = turn.querySelector(".think");
+  const result = turn.querySelector(".result");
+
+  // 요청은 즉시 보내고, 그 사이 "생각 중" 단계를 먼저 보여준다.
+  const req = fetch("/ask",{method:"POST",headers:{"Content-Type":"application/json"},
+                            body:JSON.stringify({question:q, verbose:true,
+                                                  prev_question:lastQuestion, prev_slots:lastSlots})})
+              .then(r=>r.ok ? r.json() : Promise.reject(new Error("HTTP "+r.status)));
+  lastQuestion = q;
+  renderMem();
+
+  await addStep(think, "🧭", "질문을 해석하는 중…", true);
+  let resp, err;
+  try{ resp = await req; }catch(e){ err = e; }
+  markDone(think);
+
+  if(err){ result.innerHTML = `<div class="card err">${esc(err.message)}</div>`; return; }
+
+  // 다음 턴엔 방금 사용자가 친 원문이 아니라 서버가 대명사를 풀어 쓴 문장을
+  // 넘긴다 — 원문만 계속 넘기면 그 원문 자체가 이미 "그 회사는?"류일 때
+  // 3턴째부터 맥락이 끊긴다(실측: "JYP Ent 매출은?"→"전년 대비 성장률은?"까진
+  // 되는데 그다음 "순이익률 추이는?"에서 회사를 다시 잃어버렸다).
+  if(resp.resolved_question) { lastQuestion = resp.resolved_question; renderMem(); }
+  // resp.slots는 이번 턴이 S0/S2로 확정됐을 때만 서버가 채워 보낸다(실패턴이면
+  // null) — null이면 갱신하지 않고 이전 확정 슬롯을 그대로 들고 간다.
+  if(resp.slots) { lastSlots = resp.slots; }
+
+  const D = resp.detail;
+  if(D?.pipeline?.length){
+    for(const s of D.pipeline){
+      if(s.status === "건너뜀") continue;
+      await addStep(think, STAGE_ICON[s.stage]||"•",
+        `<b>${esc(s.name)}</b>${s.note?` — ${esc(s.note)}`:""}`, false, s.status);
+    }
+  }
+  result.innerHTML = renderAnswer(resp);
+  turn.scrollIntoView({behavior:"smooth", block:"end"});
+}
+
+async function addStep(container, icon, html, busy, status){
+  const el = document.createElement("div");
+  el.className = "step" + (busy ? " busy" : " done");
+  el.innerHTML = `<span class="ic">${icon}</span><span class="tx">${html}</span>`;
+  container.appendChild(el);
+  await sleep(busy ? 40 : 220 + Math.random()*140);
+  if(!busy) return;
+}
+function markDone(container){
+  container.querySelectorAll(".step.busy").forEach(el=>{
+    el.classList.remove("busy"); el.classList.add("done");
+  });
+}
+
+let answerStore = [];
+function copyAnswer(idx, btn){
+  navigator.clipboard.writeText(answerStore[idx] || "").then(()=>{
+    const old = btn.textContent;
+    btn.textContent = "복사됨 ✓"; btn.classList.add("done");
+    setTimeout(()=>{ btn.textContent = old; btn.classList.remove("done"); }, 1500);
+  });
+}
+
+// 기본 화면은 답변 한 장만 보인다 — 근거·검증·계산과정·해석결과는 전부 한
+// 토글("자세히 보기") 안에 접어서, 처음 보는 사람이 정보량에 압도되지 않게 한다.
+// 다만 신뢰의 핵심인 "근거가 있다"는 신호는 한 줄 요약으로 기본 노출한다.
+function renderAnswer(d){
+  const idx = answerStore.length;
+  answerStore.push(d.answer || "");
+  const [c,bg,ko] = SBG[d.state] || ["var(--s1)","var(--s1bg)",d.state];
+  let h = `<div class="card">
+    <span class="badge" style="color:${c};background:${bg}">${d.state} ${ko}</span>
+    <button class="copybtn" onclick="copyAnswer(${idx}, this)">복사</button>
+    <div class="answer">${mdToHtml(d.answer)||"<i>답변 없음</i>"}</div>
+    ${d.confidence ? `<div class="confline">${esc(d.confidence)}</div>` : ""}`;
+
+  // 질문이 "표로 정리해줘"류였으면 서버가 이미 표 데이터를 따로 보낸다 — 답변은
+  // 계속 순수 텍스트로만 보여주되(escape 유지, XSS 방지), 표는 별도 필드값으로
+  // 실제 <table>을 그린다. 열 이름·칸 값 전부 escape한다 — 근거·기업명이
+  // 사용자가 입력한 질문에서 온 문자열을 거치므로 안전하게 다룬다.
+  if(d.table?.columns?.length){
+    h += `<div class="ans-table-wrap"><table class="ans-table"><thead><tr>`
+       + d.table.columns.map(c=>`<th>${esc(c)}</th>`).join("") + `</tr></thead><tbody>`
+       + d.table.rows.map(row=>`<tr>` + row.map(v=>`<td>${esc(v)}</td>`).join("") + `</tr>`).join("")
+       + `</tbody></table></div>`;
+  }
+
+  if(d.evidence?.length){
+    const e0 = d.evidence[0];
+    const seriesYears = (d.detail?.series || []).map(s=>s.year).filter(Boolean);
+    // 추이(연도별) 답변은 근거가 연도마다 하나씩, 전부 서로 다른 사실이다 —
+    // "1개 + 외 N건"으로 접으면 첫 연도 보고서명만 보이고 나머지 연도는 통째로
+    // 숨어서, 5개 연도 중 몇 개에 정정 이력이 있는지도 안 보인다. 나열형 답변은
+    // "몇 개 연도"인지를 요약하고, 근거 하나가 곧 답 전체인 경우만 종전처럼
+    // 보고서명 · 목차를 보여준다.
+    let line;
+    if(seriesYears.length > 1){
+      line = `📎 근거: ${esc(e0.corp)} · ${Math.min(...seriesYears)}~${Math.max(...seriesYears)}년 `
+           + `${d.evidence.length}건 (자세히 보기에서 연도별 확인)`;
+    } else {
+      const rlink = e0.rcept_no
+        ? `<a href="${dartUrl(e0.rcept_no)}" target="_blank" rel="noopener">${esc(e0.report)}</a>`
+        : esc(e0.report);
+      // path는 "손익계산서(연결) > 매출액"처럼 보고서 안에서 어느 목차·계정을 봐야
+      // 하는지 알려준다 — DART 링크를 눌러도 어차피 목차 트리에서 다시 찾아야
+      // 하니, 클릭 전에 어디를 찾아야 할지 미리 보여줘야 실제로 더 빨리 찾는다.
+      line = `📎 근거: ${esc(e0.corp)} · ${rlink}`
+           + (e0.path ? ` · ${esc(e0.path)}` : "")
+           + (d.evidence.length > 1 ? ` 외 ${d.evidence.length - 1}건` : "");
+    }
+    const flagged = d.evidence.filter(e => (e.flags||[]).length > 0).length;
+    if(flagged > 0){
+      line += ` · <span class="flag">⚠️ ${flagged}건 정정 이력</span>`;
+    }
+    h += `<div class="evline">${line}</div>`;
+  }
+  h += `<div class="meta">${d.elapsed_ms} ms</div>`;
+
+  const D = d.detail;
+  let more = "";
+  if(d.evidence?.length){
+    more += `<h2>근거 ${d.evidence.length}건</h2>` + d.evidence.map((e,i)=>{
+      const rlink = e.rcept_no
+        ? `<a href="${dartUrl(e.rcept_no)}" target="_blank" rel="noopener">${esc(e.report)}</a>`
+        : esc(e.report);
+      return `
+      <div class="ev">
+        <div class="t">[${i+1}] ${esc(e.corp)} · ${rlink}
+          ${(e.flags||[]).map(f=>`<span class="flag">${esc(f)}</span>`).join("")}</div>
+        <div class="p">${esc(e.path)}${e.cell?` <span class="id">[${esc(e.cell)}]</span>`:""}</div>
+        ${e.value?`<div class="q">"${esc(e.value)}"</div>`:""}
+        <div class="id">rcept ${e.rcept_no
+          ? `<a href="${dartUrl(e.rcept_no)}" target="_blank" rel="noopener">${esc(e.rcept_no)}</a>`
+          : esc(e.rcept_no)} · ${esc(e.fact_id)}</div>
+      </div>`;}).join("");
+  }
+  if(D){
+    const v = D.verification;
+    if(v?.checks?.length){
+      more += `<h2>검증 ${v.passed?"통과":"미흡"}</h2>` + v.checks.map(c=>`
+        <div class="chk"><span>${c.ok?"✅":"❌"}</span>
+        <span class="n">${esc(c.name)}</span><span class="d">${esc(c.detail)}</span></div>`).join("");
+    }
+    if(D.calculation?.length && !/계산 없음/.test(D.calculation[0])){
+      more += `<h2>계산 과정</h2><pre>${esc(D.calculation.join("\n"))}</pre>`;
+    }
+    if(D.suggested_sections?.length){
+      more += `<h2>찾아볼 문서 절</h2>` + D.suggested_sections.map(s=>
+        `<div class="ev"><div class="p">${esc(s.path)}</div>
+         <div class="id">일치 ${esc((s.matched||[]).join(", "))} · ${s.chunks.toLocaleString()}개 청크</div></div>`).join("");
+    }
+    if(D.notices?.length){
+      more += `<h2>알림</h2>` + D.notices.map(n=>`<div class="p">${esc(n)}</div>`).join("");
+    }
+    more += `<h2>해석 결과</h2><pre>${esc(JSON.stringify(
+      {interpretation:D.interpretation, searched:D.searched_scope, ranking:D.ranking, series:D.series, cagr:D.cagr_pct}, null, 1))}</pre>`;
+  }
+  if(more){
+    h += `</div><div class="card"><details><summary>자세히 보기 — 근거·검증·계산 과정</summary>${more}</details></div>`;
+  } else {
+    h += `</div>`;
+  }
+  return h;
+}
+</script></body></html>

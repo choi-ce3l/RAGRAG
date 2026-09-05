@@ -1,0 +1,285 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "\uacf5\uc2dc QA \uc5d0\uc774\uc804\ud2b8",
+        "description": "\uacf5\uc2dc \ub370\uc774\ud130\uc5d0 \uc790\uc5f0\uc5b4\ub85c \uc9c8\uc758\ud558\uba74 \ub2f5\ubcc0\uacfc **\uadfc\uac70 \uc88c\ud45c**(\uc811\uc218\ubc88\ud638\u00b7\uc7ac\ubb34\uc81c\ud45c\u00b7\uc140)\ub97c \ud568\uaed8 \ub3cc\ub824\uc900\ub2e4.\n\n\uc218\uce58\ub294 LLM\uc774 \ub9cc\ub4e4\uc9c0 \uc54a\ub294\ub2e4 \u2014 \uc870\ud68c\ub294 XBRL fact store\uc5d0\uc11c, \uacc4\uc0b0\uc740 Decimal\ub85c \ud55c\ub2e4.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/ask": {
+            "post": {
+                "summary": "\uc9c8\ubb38\uc5d0 \ub2f5\ud55c\ub2e4",
+                "description": "\uc790\uc5f0\uc5b4 \uc9c8\ubb38 \ud558\ub098\ub97c \ubc1b\uc544 \ub2f5\ubcc0\uacfc \uadfc\uac70\ub97c \ub3cc\ub824\uc900\ub2e4.\n\n\ub2f5\ud560 \uc218 \uc5c6\ub294 \uacbd\uc6b0\uc5d0\ub3c4 **HTTP 200**\uc774\uba70 `state`\ub85c \uad6c\ubd84\ud55c\ub2e4 \u2014\n\ub370\uc774\ud130\uac00 \uc5c6\ub294 \uac83(S1), \uc9c8\ubb38\uc774 \ubaa8\ud638\ud55c \uac83(S3), \uc544\uc9c1 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\ub294 \uac83(S6)\uc740\n\uc11c\ub85c \ub2e4\ub978 \uc0c1\ud669\uc774\uace0 \uc624\ub958\uac00 \uc544\ub2c8\uae30 \ub54c\ubb38\uc774\ub2e4.",
+                "operationId": "ask_ask_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "\ub2f5\ubcc0\uacfc \uadfc\uac70 \uc88c\ud45c",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AskResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "\uc900\ube44 \uc0c1\ud0dc",
+                "description": "\uc0c9\uc778 \ub85c\ub4dc\uac00 \ub05d\ub0ac\ub294\uc9c0 \uc54c\ub824\uc900\ub2e4. ready=false\uba74 \uc544\uc9c1 \uc694\uccad\uc744 \ubcf4\ub0b4\uc9c0 \ub9d0 \uac83.",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Health"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AskRequest": {
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "minLength": 1,
+                        "title": "Question",
+                        "description": "\uc790\uc5f0\uc5b4 \uc9c8\ubb38",
+                        "examples": [
+                            "\uc0bc\uc131\uc804\uc790\uc758 2024\ub144 \uc5f0\uacb0 \ub9e4\ucd9c\uc561\uc740?"
+                        ]
+                    },
+                    "verbose": {
+                        "type": "boolean",
+                        "title": "Verbose",
+                        "description": "\uacc4\uc0b0 \uacfc\uc815\u00b7\ud30c\uc774\ud504\ub77c\uc778 \ub2e8\uacc4\u00b7\uac80\uc99d \uc0c1\uc138\ub97c \ud568\uaed8 \ubc18\ud658",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "question"
+                ],
+                "title": "AskRequest"
+            },
+            "AskResponse": {
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "title": "Question"
+                    },
+                    "state": {
+                        "type": "string",
+                        "title": "State",
+                        "description": "S0 \uc815\uc0c1 \u00b7 S1 \ub370\uc774\ud130 \uc5c6\uc74c \u00b7 S2 \uac80\uc99d \ubbf8\ud761 \u00b7 S3 \ubaa8\ud638(\ub418\ubb3c\uc74c) \u00b7 S6 \ubbf8\uc9c0\uc6d0"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "title": "Answer",
+                        "description": "\uc790\uc5f0\uc5b4 \ub2f5\ubcc0. \ub2f5\ud560 \uc218 \uc5c6\ub294 \uacbd\uc6b0\uc5d0\ub3c4 \ube44\uc6b0\uc9c0 \uc54a\uace0 \uadf8 \uc774\uc720\u00b7\ub418\ubb3c\uc744 \ud56d\ubaa9\uc744 \ub2f4\ub294\ub2e4",
+                        "default": ""
+                    },
+                    "evidence": {
+                        "items": {
+                            "$ref": "#/components/schemas/Evidence"
+                        },
+                        "type": "array",
+                        "title": "Evidence"
+                    },
+                    "elapsed_ms": {
+                        "type": "integer",
+                        "title": "Elapsed Ms"
+                    },
+                    "detail": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Detail",
+                        "description": "verbose=true\uc77c \ub54c\ub9cc. \uacc4\uc0b0 \uacfc\uc815\u00b7\ub2e8\uacc4\u00b7\uac80\uc99d\u00b7\ud574\uc11d \uacb0\uacfc"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "question",
+                    "state",
+                    "elapsed_ms"
+                ],
+                "title": "AskResponse"
+            },
+            "Evidence": {
+                "properties": {
+                    "corp": {
+                        "type": "string",
+                        "title": "Corp",
+                        "description": "\uae30\uc5c5\uba85"
+                    },
+                    "report": {
+                        "type": "string",
+                        "title": "Report",
+                        "description": "\uacf5\uc2dc \ubb38\uc11c\uba85"
+                    },
+                    "path": {
+                        "type": "string",
+                        "title": "Path",
+                        "description": "\ubb38\uc11c \ub0b4 \uc704\uce58 (\uc7ac\ubb34\uc81c\ud45c > \uacc4\uc815)"
+                    },
+                    "cell": {
+                        "type": "string",
+                        "title": "Cell",
+                        "description": "\uc140 \uc704\uce58 \ub610\ub294 \ud544\ub4dc \ucf54\ub4dc",
+                        "default": ""
+                    },
+                    "rcept_no": {
+                        "type": "string",
+                        "title": "Rcept No",
+                        "description": "DART \uc811\uc218\ubc88\ud638"
+                    },
+                    "fact_id": {
+                        "type": "string",
+                        "title": "Fact Id",
+                        "description": "\uc218\uce58\uc758 \uace0\uc720 \uc2dd\ubcc4\uc790"
+                    },
+                    "flags": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Flags",
+                        "description": "\u26a0\ufe0f\uc815\uc815 \u00b7 \u26d4\ub300\uccb4\ub428 \ub4f1 \uadfc\uac70\uc758 \uc8fc\uc758 \ud45c\uc2dc"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "corp",
+                    "report",
+                    "path",
+                    "rcept_no",
+                    "fact_id"
+                ],
+                "title": "Evidence"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "Health": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "ready": {
+                        "type": "boolean",
+                        "title": "Ready"
+                    },
+                    "facts": {
+                        "type": "integer",
+                        "title": "Facts",
+                        "default": 0
+                    },
+                    "corps": {
+                        "type": "integer",
+                        "title": "Corps",
+                        "default": 0
+                    },
+                    "load_ms": {
+                        "type": "integer",
+                        "title": "Load Ms",
+                        "default": 0
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "status",
+                    "ready"
+                ],
+                "title": "Health"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

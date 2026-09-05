@@ -1,0 +1,18 @@
+# CQ5 — 비-XBRL 구조화 필드: 대우건설 행당제7구역 주택재개발정비사업 공급계약,
+# 2024-06-25 변경계약과 2025-07-29 변경계약의 계약금액 차이는? (gold qid SEM-NUM-03 실문항)
+#
+# 같은 field_key("계약금액(원)")로 두 개의 값이 잡히는 이유: 원본 표에 "계약금액(원)"
+# 단독 셀과 "2. 계약내역 - 계약금액(원) - 매출액대비(%)" 병합 셀이 공존해(factx.jsonl
+# 실측 데이터 이슈) 같은 fact_id 아래 두 값이 들어간다. valueRaw에 공백이 있는 쪽이
+# "금액 매출액대비%"가 이어붙은 오염된 값이라 정규식으로 걸러내고 순수 숫자(콤마 포함)만 쓴다.
+PREFIX dart: <http://dart-ontology.example.org/schema#>
+PREFIX dart-data: <http://dart-ontology.example.org/data#>
+
+SELECT ?rceptNo ?valueRaw WHERE {
+  ?f a dart:StructuredFact ; dart:fieldKey "계약금액(원)" ;
+     dart:valueRaw ?valueRaw ; dart:citedIn ?doc .
+  ?doc dart:rceptNo ?rceptNo .
+  FILTER(?rceptNo IN ("20240625800586", "20250729800001"))
+  FILTER(REGEX(?valueRaw, "^[0-9,]+$"))
+}
+ORDER BY ?rceptNo

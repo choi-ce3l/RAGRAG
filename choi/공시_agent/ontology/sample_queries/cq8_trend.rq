@@ -1,0 +1,11 @@
+# CQ8 — 추이: "삼성전자의 2022~2024년 연결 매출액 추이는?"
+# ABox에 삼성전자만 3개년(2022~2024)을 넣어둔 이유가 이 질문 때문이다(§6 바운딩 설계).
+PREFIX dart: <http://dart-ontology.example.org/schema#>
+PREFIX dart-data: <http://dart-ontology.example.org/data#>
+
+SELECT DISTINCT ?year ?value WHERE {
+  ?f a dart:XBRLFact ; dart:of dart-data:company_삼성전자 ; dart:about dart-data:metric_revenue ;
+     dart:hasScope dart-data:Consolidated ; dart:hasYear ?y ; dart:valueDecimal ?value .
+  ?y dart:yearValue ?year .
+}
+ORDER BY ?year

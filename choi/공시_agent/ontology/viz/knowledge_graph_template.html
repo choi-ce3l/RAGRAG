@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공시 온톨로지 Knowledge Graph</title>
+<style>
+  :root {
+    --bg: #f7f8fb; --panel: #ffffff; --panel-border: #e2e6ef;
+    --text: #1b2333; --text-dim: #6b7488; --edge: #c9cfdd; --edge-strong: #98a2b8;
+    --accent: #3b6fe0; --accent-strong: #23408f;
+    --t-sector: #7c5cf0; --t-company: #2f8fd6; --t-statement: #e08a2f;
+    --t-concept: #2fa66a; --t-metric: #d63a63; --t-derived: #c23bcf;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1420; --panel: #161e2e; --panel-border: #2a3448;
+      --text: #e7ecf5; --text-dim: #909cb4; --edge: #33405c; --edge-strong: #4b5a7c;
+      --accent: #6fa2ff; --accent-strong: #a9c8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  #app { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  svg { width: 100%; height: 100%; cursor: grab; }
+  svg.panning { cursor: grabbing; }
+  .node circle { stroke-width: 1.6px; cursor: pointer; transition: opacity .15s; }
+  .node text { font-size: 10.5px; fill: var(--text); pointer-events: none; user-select: none; }
+  /* line 자체에 class="edge"를 직접 준다(그룹으로 감싸지 않음) — 선택자는 `.edge line`이
+     아니라 `line.edge`여야 매칭된다. 처음엔 `.edge line`으로 써서 CSS가 안 걸려 선이
+     기본 stroke:none으로 안 보였었다. */
+  line.edge { stroke: var(--edge-strong); stroke-width: 1.1px; transition: opacity .15s, stroke .15s; }
+  .match-ring { fill: none; stroke: var(--accent); stroke-width: 2.5px; }
+
+  #header { position: absolute; top: 16px; left: 16px; z-index: 5; max-width: 640px; }
+  #header h1 { margin: 0 0 4px; font-size: 19px; font-weight: 700; }
+  #header p { margin: 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+  #stats { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  #stats .chip {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 999px;
+    padding: 3px 11px; font-size: 11.5px; color: var(--text-dim);
+  }
+  #stats .chip b { color: var(--text); font-weight: 700; }
+
+  #sidebar {
+    position: absolute; top: 16px; right: 16px; z-index: 5; width: 260px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
+    padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.08);
+  }
+  .panel h3 { margin: 0 0 8px; font-size: 12px; color: var(--text-dim); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .02em; }
+  #search { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--panel-border);
+    background: var(--bg); color: var(--text); font-size: 13px; }
+  .layer-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+  .layer-row .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .layer-row .n { margin-left: auto; color: var(--text-dim); font-size: 11.5px; }
+  .layer-row label { flex: 1; cursor: pointer; }
+  .btn-row { display: flex; gap: 6px; margin-top: 4px; }
+  button.action {
+    flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 6px 8px; font-size: 12px; cursor: pointer;
+  }
+  button.action:hover { border-color: var(--accent); }
+  #detail { min-height: 40px; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
+  #detail .k { color: var(--text); font-weight: 700; font-size: 13.5px; }
+  #detail .row { display: flex; justify-content: space-between; gap: 8px; }
+  #detail .neighbors { margin-top: 6px; max-height: 160px; overflow-y: auto; }
+  #detail .neighbors div { padding: 2px 0; border-top: 1px dashed var(--panel-border); }
+
+  #footer { position: absolute; bottom: 14px; left: 16px; z-index: 5; font-size: 11.5px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>공시 온톨로지 Knowledge Graph</h1>
+    <p>업종 → 기업 → 재무제표 → 개념 → 정규지표, 그리고 파생개념까지. 노드와 엣지는 전부
+       실제 코퍼스에서 뽑은 데이터입니다(choi/공시_agent/scripts/export_graph.py). 드래그로
+       이동, 휠로 확대, 노드를 누르면 이웃과 상세정보가 나옵니다.</p>
+    <div id="stats"></div>
+  </div>
+  <div id="sidebar">
+    <div class="panel">
+      <h3>찾기</h3>
+      <input id="search" type="text" placeholder="기업 · 개념 · 업종...">
+    </div>
+    <div class="panel">
+      <h3>층</h3>
+      <div id="layers"></div>
+      <div class="btn-row">
+        <button class="action" id="btn-all">전체</button>
+        <button class="action" id="btn-relayout">재배치</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>선택</h3>
+      <div id="detail">노드를 누르면 상세가 나옵니다.</div>
+    </div>
+  </div>
+  <svg id="canvas"></svg>
+  <div id="footer"></div>
+</div>
+<script>
+const DATA = __GRAPH_DATA_JSON__;
+const NS = "http://www.w3.org/2000/svg";
+const app = document.getElementById('app');
+
+const TYPE_COLOR = { sector: "var(--t-sector)", company: "var(--t-company)",
+  statement: "var(--t-statement)", concept: "var(--t-concept)",
+  metric: "var(--t-metric)", derived: "var(--t-derived)" };
+
+const nodesById = {};
+const nodes = DATA.nodes.map(n => {
+  const o = Object.assign({}, n, {
+    x: (Math.random() - 0.5) * 1600, y: (Math.random() - 0.5) * 1600, vx: 0, vy: 0, visible: true,
+  });
+  nodesById[o.id] = o;
+  return o;
+});
+const edges = DATA.edges.filter(e => nodesById[e.s] && nodesById[e.t]);
+const neighborMap = {};
+for (const n of nodes) neighborMap[n.id] = [];
+for (const e of edges) {
+  neighborMap[e.s].push({ id: e.t, rel: e.rel });
+  neighborMap[e.t].push({ id: e.s, rel: e.rel });
+}
+
+// ---- 타입별 노드 반지름: weight를 로그 스케일로 타입 내부에서 정규화 ----
+const RADIUS_RANGE = [5, 24];
+const byType = {};
+for (const n of nodes) (byType[n.type] = byType[n.type] || []).push(n);
+for (const type in byType) {
+  const arr = byType[type];
+  const logs = arr.map(n => Math.log((n.weight || 1) + 1));
+  const lo = Math.min(...logs), hi = Math.max(...logs);
+  for (let i = 0; i < arr.length; i++) {
+    const t = hi > lo ? (logs[i] - lo) / (hi - lo) : 0.5;
+    arr[i].r = RADIUS_RANGE[0] + t * (RADIUS_RANGE[1] - RADIUS_RANGE[0]);
+  }
+}
+
+// ---- 물리 시뮬레이션 ----
+const REPEL = 12000, SPRING = 0.01, REST = 60, CENTER = 0.0018, DAMP = 0.86;
+function tick() {
+  for (const n of nodes) { n.fx = 0; n.fy = 0; }
+  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i];
+    if (!a.visible) continue;
+    for (let j = i + 1; j < nodes.length; j++) {
+      const b = nodes[j];
+      if (!b.visible) continue;
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let d2 = dx * dx + dy * dy;
+      if (d2 > 900000) continue;      // 너무 먼 쌍은 생략 (성능)
+      d2 = Math.max(d2, 36);        // 최소거리 바닥 — 안 두면 우연히 겹친 두 노드 사이 힘이 발산한다
+      let d = Math.sqrt(d2);
+      let f = REPEL / d2;
+      dx /= d; dy /= d;
+      a.fx += dx * f; a.fy += dy * f;
+      b.fx -= dx * f; b.fy -= dy * f;
+    }
+  }
+  for (const e of edges) {
+    const a = nodesById[e.s], b = nodesById[e.t];
+    if (!a.visible || !b.visible) continue;
+    let dx = b.x - a.x, dy = b.y - a.y;
+    let d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+    let f = (d - REST) * SPRING;
+    dx /= d; dy /= d;
+    a.fx += dx * f; a.fy += dy * f;
+    b.fx -= dx * f; b.fy -= dy * f;
+  }
+  for (const n of nodes) {
+    if (n.pinned || !n.visible) continue;
+    n.fx -= n.x * CENTER; n.fy -= n.y * CENTER;
+    n.vx = (n.vx + n.fx) * DAMP; n.vy = (n.vy + n.fy) * DAMP;
+    const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+    const MAX_SPEED = 40;            // 방어적 상한 — 드물게 힘이 겹쳐도 한 틱에 폭주하지 않게
+    if (speed > MAX_SPEED) { n.vx = n.vx / speed * MAX_SPEED; n.vy = n.vy / speed * MAX_SPEED; }
+    n.x += n.vx; n.y += n.vy;
+  }
+}
+
+// ---- SVG 구성 ----
+const svg = document.getElementById('canvas');
+const g = document.createElementNS(NS, 'g');
+svg.appendChild(g);
+const edgeLayer = document.createElementNS(NS, 'g');
+const nodeLayer = document.createElementNS(NS, 'g');
+g.appendChild(edgeLayer); g.appendChild(nodeLayer);
+
+const edgeEls = edges.map(e => {
+  const line = document.createElementNS(NS, 'line');
+  line.setAttribute('class', 'edge');
+  edgeLayer.appendChild(line);
+  return { e, line };
+});
+
+const nodeEls = nodes.map(n => {
+  const grp = document.createElementNS(NS, 'g');
+  grp.setAttribute('class', 'node');
+  const ring = document.createElementNS(NS, 'circle');
+  ring.setAttribute('class', 'match-ring');
+  ring.setAttribute('r', n.r + 4);
+  ring.style.display = 'none';
+  const circle = document.createElementNS(NS, 'circle');
+  circle.setAttribute('r', n.r);
+  circle.setAttribute('fill', TYPE_COLOR[n.type] || '#888');
+  circle.setAttribute('stroke', TYPE_COLOR[n.type] || '#888');
+  circle.setAttribute('fill-opacity', '0.88');
+  const text = document.createElementNS(NS, 'text');
+  text.textContent = n.label;
+  text.setAttribute('x', n.r + 4); text.setAttribute('y', 3.5);
+  text.style.display = n.r > 9 ? 'block' : 'none';   // 작은 노드는 라벨을 기본 숨김(혼잡 방지)
+  grp.appendChild(ring); grp.appendChild(circle); grp.appendChild(text);
+  nodeLayer.appendChild(grp);
+
+  grp.addEventListener('click', (ev) => { ev.stopPropagation(); selectNode(n.id); });
+  grp.addEventListener('mousedown', (ev) => startDrag(ev, n));
+  grp.addEventListener('mouseenter', () => { text.style.display = 'block'; });
+  grp.addEventListener('mouseleave', () => { text.style.display = n.r > 9 ? 'block' : 'none'; });
+  return { n, grp, circle, text, ring };
+});
+const nodeElById = Object.fromEntries(nodeEls.map(x => [x.n.id, x]));
+
+function render() {
+  for (const { e, line } of edgeEls) {
+    const a = nodesById[e.s], b = nodesById[e.t];
+    const show = a.visible && b.visible;
+    line.style.display = show ? 'block' : 'none';
+    if (show) {
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    }
+  }
+  for (const { n, grp } of nodeEls) {
+    grp.style.display = n.visible ? 'block' : 'none';
+    grp.setAttribute('transform', `translate(${n.x},${n.y})`);
+  }
+}
+
+let running = true, frame = 0;
+function loop() {
+  if (running) {
+    tick(); render(); frame++;
+    if (frame > 520) running = false;
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---- 상단 통계 칩 ----
+const statsEl = document.getElementById('stats');
+const STAT_LABEL = { Sector: "업종", Company: "기업", Document: "공시문서", Concept: "개념",
+                     Derived: "파생개념" };
+// 칩 값은 실제로 그려진 노드 수를 쓴다 — Concept는 DATA.totals.Concept(전체 어휘 4,898개)가
+// 아니라 ConceptShown(실제로 그려진 것)이어야 "왜 노드가 이거밖에 없냐"는 혼란이 안 생긴다.
+const STAT_VALUE = { Sector: DATA.totals.Sector, Company: DATA.totals.Company,
+                     Document: DATA.totals.Document, Concept: DATA.totals.ConceptShown,
+                     Derived: DATA.totals.Derived };
+for (const key of ["Sector", "Company", "Document", "Concept", "Derived"]) {
+  if (!(key in STAT_VALUE)) continue;
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.innerHTML = `${STAT_LABEL[key]} <b>${STAT_VALUE[key].toLocaleString()}</b>`;
+  statsEl.appendChild(chip);
+}
+document.getElementById('footer').textContent =
+  `개념은 ${DATA.minCoverage}개 기업 이상에서 쓰이는 것만 표시합니다(전체 어휘 ${DATA.totals.Concept.toLocaleString()}개 중 일부). ` +
+  `노드 ${nodes.length}개 · 엣지 ${edges.length}개.`;
+
+// ---- 층(레이어) 토글 ----
+const layersEl = document.getElementById('layers');
+const layerState = {};
+for (const type of DATA.typeOrder) {
+  const count = byType[type] ? byType[type].length : 0;
+  if (!count) continue;
+  layerState[type] = true;
+  const row = document.createElement('div');
+  row.className = 'layer-row';
+  const id = `layer-${type}`;
+  row.innerHTML = `<input type="checkbox" id="${id}" checked>
+    <span class="dot" style="background:${TYPE_COLOR[type]}"></span>
+    <label for="${id}">${DATA.typeKo[type] || type}</label>
+    <span class="n">${count}</span>`;
+  layersEl.appendChild(row);
+  row.querySelector('input').addEventListener('change', (ev) => {
+    layerState[type] = ev.target.checked;
+    applyFilters();
+  });
+}
+
+let searchTerm = '';
+let selected = null;
+let selectedNeighbors = null;   // Set of ids, or null when nothing selected
+
+// 층 체크박스 필터와 노드 선택(isolate) 필터를 함께 적용한다 — 둘 다 통과해야 보인다.
+function applyFilters() {
+  for (const n of nodes) {
+    n.visible = !!layerState[n.type] && (!selectedNeighbors || selectedNeighbors.has(n.id));
+  }
+  for (const { n, ring } of nodeEls) {
+    const isSelected = n.id === selected;
+    const isMatch = searchTerm && n.label.toLowerCase().includes(searchTerm);
+    ring.style.display = (isSelected || isMatch) ? 'block' : 'none';
+    ring.style.stroke = isSelected ? 'var(--accent-strong)' : 'var(--accent)';
+    ring.style.strokeWidth = isSelected ? '3.5px' : '2.5px';
+  }
+  running = true; frame = 0;   // 격리된(혹은 복원된) 부분 그래프를 처음부터 다시 정착시킨다
+  render();
+}
+
+document.getElementById('search').addEventListener('input', (ev) => {
+  searchTerm = ev.target.value.trim().toLowerCase();
+  applyFilters();
+});
+document.getElementById('btn-all').addEventListener('click', () => {
+  for (const type in layerState) layerState[type] = true;
+  layersEl.querySelectorAll('input').forEach(cb => cb.checked = true);
+  document.getElementById('search').value = '';
+  searchTerm = '';
+  applyFilters();
+});
+document.getElementById('btn-relayout').addEventListener('click', () => {
+  for (const n of nodes) {
+    n.x = (Math.random() - 0.5) * 1600; n.y = (Math.random() - 0.5) * 1600;
+    n.vx = 0; n.vy = 0; n.pinned = false;
+  }
+  running = true; frame = 0;
+});
+
+// ---- 상세 패널 + 격리 보기 ----
+// 노드를 고르면 관계 없는 노드는 흐리게 하는 게 아니라 아예 숨기고 남은 부분그래프만
+// 다시 정착시킨다. 재무제표(statement) 노드처럼 이웃이 수백 개인 노드를 고르면, 그 표에
+// 실제로 속한 계정과목 + 그걸 보고하는 기업만 남아 "이 표가 왜 따로 있는지"가 그래프
+// 모양으로 바로 보인다.
+function selectNode(id) {
+  selected = (selected === id) ? null : id;
+  if (selected) {
+    selectedNeighbors = new Set([selected]);
+    for (const nb of neighborMap[selected]) selectedNeighbors.add(nb.id);
+  } else {
+    selectedNeighbors = null;
+  }
+  applyFilters();
+
+  const detail = document.getElementById('detail');
+  if (!selected) { detail.textContent = '노드를 누르면 상세가 나옵니다.'; return; }
+  const n = nodesById[selected];
+  const extra = [];
+  for (const k of ['statement', 'sector', 'surfaces', 'unit', 'validated', 'recall']) {
+    if (n[k] !== undefined && n[k] !== null) extra.push(`<div class="row"><span>${k}</span><span>${n[k]}</span></div>`);
+  }
+  const allNbrs = neighborMap[selected];
+  const nbrs = allNbrs.slice(0, 40)
+    .map(nb => `<div>${DATA.typeKo[nodesById[nb.id].type] || nodesById[nb.id].type} · ${nodesById[nb.id].label} <span style="color:var(--text-dim)">(${nb.rel})</span></div>`)
+    .join('');
+  const more = allNbrs.length > 40 ? `<div style="color:var(--text-dim)">…외 ${allNbrs.length - 40}개</div>` : '';
+  detail.innerHTML = `<div class="k">${n.label}</div>
+    <div class="row"><span>유형</span><span>${DATA.typeKo[n.type] || n.type}</span></div>
+    <div class="row"><span>weight</span><span>${n.weight}</span></div>
+    ${extra.join('')}
+    <div class="row" style="margin-top:6px"><span>연결된 노드</span><span>${allNbrs.length}</span></div>
+    <div class="neighbors">${nbrs}${more}</div>`;
+}
+svg.addEventListener('click', () => selectNode(null));
+
+// ---- 드래그 / 줌 / 팬 ----
+let dragging = null, dragOffset = { x: 0, y: 0 };
+function toWorld(ev) {
+  const pt = svg.createSVGPoint();
+  pt.x = ev.clientX; pt.y = ev.clientY;
+  return pt.matrixTransform(g.getScreenCTM().inverse());
+}
+function startDrag(ev, n) {
+  ev.stopPropagation();
+  dragging = n; n.pinned = true;
+  running = true; frame = 250;
+  const w = toWorld(ev);
+  dragOffset = { x: n.x - w.x, y: n.y - w.y };
+}
+let panning = false, panStart = { x: 0, y: 0 };
+window.addEventListener('mousemove', (ev) => {
+  if (dragging) {
+    const w = toWorld(ev);
+    dragging.x = w.x + dragOffset.x; dragging.y = w.y + dragOffset.y;
+    dragging.vx = 0; dragging.vy = 0;
+  } else if (panning) {
+    pan.x = ev.clientX - panStart.x; pan.y = ev.clientY - panStart.y;
+    applyTransform();
+  }
+});
+window.addEventListener('mouseup', () => {
+  if (dragging) { dragging.pinned = false; dragging = null; }
+  panning = false; svg.classList.remove('panning');
+});
+
+let scale = 0.75, pan = { x: 0, y: 0 };
+function applyTransform() {
+  g.setAttribute('transform', `translate(${app.clientWidth/2 + pan.x},${app.clientHeight/2 + pan.y}) scale(${scale})`);
+}
+applyTransform();
+svg.addEventListener('wheel', (ev) => {
+  ev.preventDefault();
+  scale = Math.min(4, Math.max(0.15, scale * (ev.deltaY > 0 ? 0.9 : 1.1)));
+  applyTransform();
+}, { passive: false });
+svg.addEventListener('mousedown', (ev) => {
+  if (ev.target === svg) {
+    panning = true; svg.classList.add('panning');
+    panStart = { x: ev.clientX - pan.x, y: ev.clientY - pan.y };
+  }
+});
+</script>
+</body>
+</html>

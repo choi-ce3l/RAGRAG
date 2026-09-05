@@ -1,0 +1,14 @@
+# CQ9 — 동의어: "NAVER의 영업수익(매출액)은 얼마인가?"
+# NAVER는 "매출액"이 아니라 "영업수익"으로 신고한다. dart:Metric revenue 개체의
+# skos:altLabel에 "영업수익"이 이미 들어 있어(facts.py _ONTOLOGY의 표기변형 목록),
+# 사용자가 어떤 표기로 물어도 같은 normalizesTo 경로로 resolve된다는 것을 보여준다.
+PREFIX dart: <http://dart-ontology.example.org/schema#>
+PREFIX dart-data: <http://dart-ontology.example.org/data#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?value ?unitKr WHERE {
+  dart-data:metric_revenue skos:altLabel "영업수익"@ko .
+  ?f a dart:XBRLFact ; dart:of dart-data:company_NAVER ; dart:about dart-data:metric_revenue ;
+     dart:hasScope dart-data:Consolidated ; dart:hasYear dart-data:year_2024 ;
+     dart:valueDecimal ?value ; dart:unitKr ?unitKr .
+}

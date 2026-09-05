@@ -1,0 +1,403 @@
+{
+ "nodes": [
+  {
+   "id": "BalanceSheet",
+   "label": "재무상태표",
+   "comment": "facts.py _STATEMENT['BS']",
+   "category": "document",
+   "parent": "Statement"
+  },
+  {
+   "id": "CashFlowStatement",
+   "label": "현금흐름표",
+   "comment": "facts.py _STATEMENT['CF']",
+   "category": "document",
+   "parent": "Statement"
+  },
+  {
+   "id": "EquityStatement",
+   "label": "자본변동표",
+   "comment": "facts.py _STATEMENT['EF'] — kg.py STATEMENT_KO에는 누락돼 있던 값을 여기서 보완",
+   "category": "document",
+   "parent": "Statement"
+  },
+  {
+   "id": "ExchangeDisclosure",
+   "label": "거래소공시(단일판매·공급계약 등)",
+   "comment": "fields.py / field_ontology.json doc_group == 'exchange'",
+   "category": "document",
+   "parent": "Document"
+  },
+  {
+   "id": "HoldingReport",
+   "label": "지분공시(대량보유상황보고서 등)",
+   "comment": "fields.py / field_ontology.json doc_group == 'holding' (factx.jsonl 실측: holding 1,550,014건 — 3개 문서군 중 최다)",
+   "category": "document",
+   "parent": "Document"
+  },
+  {
+   "id": "IncomeStatement",
+   "label": "손익계산서",
+   "comment": "facts.py _STATEMENT['IS']",
+   "category": "document",
+   "parent": "Statement"
+  },
+  {
+   "id": "IndustryClass",
+   "label": "산업(industry, 8종)",
+   "comment": "sectors.py load()['industry'] — IT, 금융, 소재 등 GICS류 대분류",
+   "category": "entity",
+   "parent": "Sector"
+  },
+  {
+   "id": "MajorMattersReport",
+   "label": "주요사항보고서",
+   "comment": "fields.py / field_ontology.json doc_group == 'major'",
+   "category": "document",
+   "parent": "Document"
+  },
+  {
+   "id": "PeriodicReport",
+   "label": "정기공시(사업보고서 등)",
+   "comment": "facts.py entry['doc_group'] == 'periodic'",
+   "category": "document",
+   "parent": "Document"
+  },
+  {
+   "id": "RatioStatement",
+   "label": "재무비율(공시 명시값)",
+   "comment": "derived.py validate()가 참조하는 statement=='ratio' 레코드 — 코퍼스에 명시된 비율값",
+   "category": "document",
+   "parent": "Statement"
+  },
+  {
+   "id": "SectorClass",
+   "label": "업종(sector, 20종)",
+   "comment": "sectors.py load()['sector'] — 반도체·전자부품, 자동차·모빌리티 등",
+   "category": "entity",
+   "parent": "Sector"
+  },
+  {
+   "id": "DerivedConcept",
+   "label": "파생 개념(비율)",
+   "comment": "choi/공시_agent/qa/derived.py RULES — 9개 파생비율(부채비율 등)",
+   "category": "concept",
+   "parent": "FinancialConcept"
+  },
+  {
+   "id": "Event",
+   "label": "이벤트 공시",
+   "comment": "qa/events_vocab.py event_types() — report_nm이 156종 이벤트유형 어휘에 매칭되는 문서(정기공시 제외). qa/eventspan.py가 이 문서의 접수일자를 시간축 기준점 삼아 전후 Fact를 대조한다.",
+   "category": "event",
+   "parent": "Document"
+  },
+  {
+   "id": "FiscalYear",
+   "label": "회계연도",
+   "comment": "facts.py Fact.base_year",
+   "category": "fact",
+   "parent": null
+  },
+  {
+   "id": "StructuredFact",
+   "label": "비-XBRL 구조화 사실",
+   "comment": "factx.jsonl 레코드 — field_key/doc_group/kind 보유",
+   "category": "fact",
+   "parent": "Fact"
+  },
+  {
+   "id": "Metric",
+   "label": "정규 재무지표",
+   "comment": "choi/code_chunkingandparsing/src/facts.py _ONTOLOGY(10) + ragrag/pipeline/facts.py _ONTOLOGY_EXT(21) = 31개 metric_key",
+   "category": "concept",
+   "parent": "FinancialConcept"
+  },
+  {
+   "id": "Scope",
+   "label": "연결/별도 기준",
+   "comment": "facts.py Fact.scope ('consolidated'/'separate') — owl:oneOf로 정확히 두 개체만 허용",
+   "category": "fact",
+   "parent": null
+  },
+  {
+   "id": "XBRLFact",
+   "label": "XBRL 재무제표 사실",
+   "comment": "facts.py extract_facts() 반환 레코드 — aclass_xbrl_code/fiscal_term/row_index/col_index/sign 보유",
+   "category": "fact",
+   "parent": "Fact"
+  },
+  {
+   "id": "FinancialConcept",
+   "label": "재무 개념",
+   "comment": "추상 최상위 — '수치/텍스트 질문의 대상이 될 수 있는 것'. 하위 4개 클래스로 세분.",
+   "category": "concept",
+   "parent": null
+  },
+  {
+   "id": "Period",
+   "label": "회계기간",
+   "comment": "facts.py Fact.period_start/period_end + qa/period.py 파싱 결과(기수 포함)",
+   "category": "fact",
+   "parent": null
+  },
+  {
+   "id": "AccountItem",
+   "label": "계정과목(정규형)",
+   "comment": "choi/공시_agent/qa/concepts.py ConceptIndex — canonical(label_norm), surfaces, corps, synonym_group",
+   "category": "concept",
+   "parent": "FinancialConcept"
+  },
+  {
+   "id": "Company",
+   "label": "기업",
+   "comment": "choi/code_chunkingandparsing/src/facts.py Fact.corp_code/corp_name",
+   "category": "entity",
+   "parent": null
+  },
+  {
+   "id": "Sector",
+   "label": "업종/산업",
+   "comment": "choi/공시_agent/qa/sectors.py sector(20종)/industry(8종) 인덱스",
+   "category": "entity",
+   "parent": null
+  },
+  {
+   "id": "StructuredField",
+   "label": "비-XBRL 구조화 필드",
+   "comment": "choi/공시_agent/qa/fields.py + data/field_ontology.json — 387개 (major/exchange/holding 문서군)",
+   "category": "concept",
+   "parent": "FinancialConcept"
+  },
+  {
+   "id": "Statement",
+   "label": "재무제표",
+   "comment": "choi/code_chunkingandparsing/src/facts.py Fact.statement 필드 + derived.py 'ratio' 의사-제표",
+   "category": "document",
+   "parent": null
+  },
+  {
+   "id": "DerivationRule",
+   "label": "파생 공식(n항관계 reification)",
+   "comment": "derived.py RULES 튜플(연산자·피연산자2개·단위·배수·검증대상metric_key)을 W3C n-ary relation 패턴으로 reify — OWL 객체속성 하나로는 표현 불가능한 n항관계이므로",
+   "category": "rule",
+   "parent": null
+  },
+  {
+   "id": "Document",
+   "label": "공시문서",
+   "comment": "choi/code_chunkingandparsing/src/facts.py Fact.rcept_no/doc_id, fields.py doctypes",
+   "category": "document",
+   "parent": null
+  },
+  {
+   "id": "Fact",
+   "label": "사실(관측값)",
+   "comment": "choi/code_chunkingandparsing/src/facts.py Fact 레코드 / structstore 구조화 fact 레코드",
+   "category": "fact",
+   "parent": null
+  }
+ ],
+ "edges": [
+  {
+   "source": "Fact",
+   "target": "FinancialConcept",
+   "label": "about"
+  },
+  {
+   "source": "Event",
+   "target": "Period",
+   "label": "anchorsPeriod"
+  },
+  {
+   "source": "Fact",
+   "target": "Document",
+   "label": "citedIn"
+  },
+  {
+   "source": "Document",
+   "target": "Statement",
+   "label": "contains"
+  },
+  {
+   "source": "Company",
+   "target": "Document",
+   "label": "filed"
+  },
+  {
+   "source": "Statement",
+   "target": "AccountItem",
+   "label": "hasItem"
+  },
+  {
+   "source": "DerivationRule",
+   "target": "AccountItem",
+   "label": "hasOperand1"
+  },
+  {
+   "source": "DerivationRule",
+   "target": "AccountItem",
+   "label": "hasOperand2"
+  },
+  {
+   "source": "Fact",
+   "target": "Period",
+   "label": "hasPeriod"
+  },
+  {
+   "source": "DerivedConcept",
+   "target": "DerivationRule",
+   "label": "hasRule"
+  },
+  {
+   "source": "Fact",
+   "target": "Scope",
+   "label": "hasScope"
+  },
+  {
+   "source": "Fact",
+   "target": "FiscalYear",
+   "label": "hasYear"
+  },
+  {
+   "source": "AccountItem",
+   "target": "Metric",
+   "label": "normalizesTo"
+  },
+  {
+   "source": "Fact",
+   "target": "Company",
+   "label": "of"
+  },
+  {
+   "source": "DerivationRule",
+   "target": "Metric",
+   "label": "validatesAgainstMetric"
+  },
+  {
+   "source": "Sector",
+   "target": "Company",
+   "label": "hasMember"
+  },
+  {
+   "source": "Document",
+   "target": "Document",
+   "label": "supersedes"
+  },
+  {
+   "source": "BalanceSheet",
+   "target": "Statement",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "CashFlowStatement",
+   "target": "Statement",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "EquityStatement",
+   "target": "Statement",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "ExchangeDisclosure",
+   "target": "Document",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "HoldingReport",
+   "target": "Document",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "IncomeStatement",
+   "target": "Statement",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "IndustryClass",
+   "target": "Sector",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "MajorMattersReport",
+   "target": "Document",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "PeriodicReport",
+   "target": "Document",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "RatioStatement",
+   "target": "Statement",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "SectorClass",
+   "target": "Sector",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "DerivedConcept",
+   "target": "FinancialConcept",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "Event",
+   "target": "Document",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "StructuredFact",
+   "target": "Fact",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "Metric",
+   "target": "FinancialConcept",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "XBRLFact",
+   "target": "Fact",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "AccountItem",
+   "target": "FinancialConcept",
+   "label": "subClassOf",
+   "hierarchy": true
+  },
+  {
+   "source": "StructuredField",
+   "target": "FinancialConcept",
+   "label": "subClassOf",
+   "hierarchy": true
+  }
+ ],
+ "categories": {
+  "concept": "재무 개념",
+  "entity": "기업/업종",
+  "document": "문서/재무제표",
+  "fact": "사실/차원",
+  "rule": "파생 규칙",
+  "event": "이벤트·정정"
+ }
+}

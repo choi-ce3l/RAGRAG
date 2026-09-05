@@ -1,0 +1,9 @@
+# 런타임 데이터 전체 — corpus에서 재생성되는 캐시 + 원본 모두 커밋하지 않는다.
+# 재현 방법은 README.md "데이터" 섹션 참고.
+data/
+
+__pycache__/
+*.pyc
+.env
+_backup_*/
+.claude/

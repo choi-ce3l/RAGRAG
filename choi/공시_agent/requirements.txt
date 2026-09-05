@@ -1,0 +1,9 @@
+# 공시 QA 에이전트 — 실행에 필요한 패키지
+# LLM 호출 없이 동작하므로 의존성이 적다. openai는 CLOVA 호출(서술형 경로)용.
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+openai>=1.40          # CLOVA Studio (OpenAI 호환) — 현재 경로에선 미사용
+numpy>=1.24           # 기존 검색 자산(rag.py) 재사용 시
+lxml>=5.0             # code_chunkingandparsing/src(numqa 등)가 XBRL 파싱에 씀

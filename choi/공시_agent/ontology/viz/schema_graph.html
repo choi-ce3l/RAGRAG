@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DART 공시 온톨로지 — 스키마 그래프</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #121a2b; --panel-border: #24314d;
+    --text: #e7ecf5; --text-dim: #9aa7bd; --edge: #3a4a6b; --edge-dim: #232d42;
+    --accent: #5aa9ff;
+    --cat-concept: #f2b93d; --cat-entity: #52d17c; --cat-document: #6aa8ff;
+    --cat-fact: #ef7f6b; --cat-rule: #c98cf0;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f6f7fb; --panel: #ffffff; --panel-border: #dde3ee;
+      --text: #1a2233; --text-dim: #5b6478; --edge: #c3cbdc; --edge-dim: #e4e8f1;
+      --accent: #2563eb;
+      --cat-concept: #c8860a; --cat-entity: #1f9d55; --cat-document: #2f6fe0;
+      --cat-fact: #d1573f; --cat-rule: #9a4fd6;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  #app { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  svg { width: 100%; height: 100%; cursor: grab; }
+  svg.panning { cursor: grabbing; }
+  .node circle { stroke-width: 2px; cursor: pointer; transition: opacity .15s; }
+  .node text { font-size: 12px; fill: var(--text); pointer-events: none; user-select: none; }
+  .node text.sub { font-size: 9px; fill: var(--text-dim); }
+  .edge line { stroke: var(--edge); stroke-width: 1.2px; transition: opacity .15s, stroke .15s; }
+  .edge line.hier { stroke: var(--edge-dim); stroke-dasharray: 3 3; }
+  .edge text { font-size: 8.5px; fill: var(--text-dim); pointer-events: none; }
+  .dim { opacity: .12; }
+  .hidden-label { display: none; }
+  #title {
+    position: absolute; top: 16px; left: 16px; z-index: 5; pointer-events: none;
+  }
+  #title h1 { margin: 0; font-size: 17px; font-weight: 650; }
+  #title p { margin: 2px 0 0; font-size: 12px; color: var(--text-dim); }
+  #legend {
+    position: absolute; bottom: 16px; left: 16px; z-index: 5;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 10px 14px; font-size: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25);
+  }
+  #legend .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  #legend .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  #hint {
+    position: absolute; bottom: 16px; right: 16px; z-index: 5; font-size: 11px;
+    color: var(--text-dim); text-align: right; max-width: 220px; line-height: 1.5;
+  }
+  #tooltip {
+    position: absolute; z-index: 10; pointer-events: none; max-width: 300px;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12px; line-height: 1.45; box-shadow: 0 8px 30px rgba(0,0,0,.3);
+    opacity: 0; transition: opacity .1s;
+  }
+  #tooltip .k { font-weight: 650; margin-bottom: 3px; }
+  #tooltip .c { color: var(--text-dim); }
+  #controls {
+    position: absolute; top: 16px; right: 16px; z-index: 5; display: flex; gap: 6px;
+  }
+  #controls button {
+    background: var(--panel); color: var(--text); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+  }
+  #controls button:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title">
+    <h1>DART 공시 온톨로지 — TBox 스키마</h1>
+    <p>choi/공시_agent/ontology/tbox.ttl 기준 자동 생성 · 드래그·휠줌·클릭 가능</p>
+  </div>
+  <div id="controls">
+    <button id="btn-reset">레이아웃 리셋</button>
+    <button id="btn-fit">화면 맞춤</button>
+  </div>
+  <svg id="canvas"></svg>
+  <div id="legend"></div>
+  <div id="hint">노드를 클릭하면 인접 관계만 강조됩니다. 배경 클릭으로 해제. 마우스 휠로 확대/축소.</div>
+  <div id="tooltip"></div>
+</div>
+<script>
+const DATA = {"nodes": [{"id": "BalanceSheet", "label": "재무상태표", "comment": "facts.py _STATEMENT['BS']", "category": "document", "parent": "Statement"}, {"id": "CashFlowStatement", "label": "현금흐름표", "comment": "facts.py _STATEMENT['CF']", "category": "document", "parent": "Statement"}, {"id": "EquityStatement", "label": "자본변동표", "comment": "facts.py _STATEMENT['EF'] — kg.py STATEMENT_KO에는 누락돼 있던 값을 여기서 보완", "category": "document", "parent": "Statement"}, {"id": "ExchangeDisclosure", "label": "거래소공시(단일판매·공급계약 등)", "comment": "fields.py / field_ontology.json doc_group == 'exchange'", "category": "document", "parent": "Document"}, {"id": "HoldingReport", "label": "지분공시(대량보유상황보고서 등)", "comment": "fields.py / field_ontology.json doc_group == 'holding' (factx.jsonl 실측: holding 1,550,014건 — 3개 문서군 중 최다)", "category": "document", "parent": "Document"}, {"id": "IncomeStatement", "label": "손익계산서", "comment": "facts.py _STATEMENT['IS']", "category": "document", "parent": "Statement"}, {"id": "IndustryClass", "label": "산업(industry, 8종)", "comment": "sectors.py load()['industry'] — IT, 금융, 소재 등 GICS류 대분류", "category": "entity", "parent": "Sector"}, {"id": "MajorMattersReport", "label": "주요사항보고서", "comment": "fields.py / field_ontology.json doc_group == 'major'", "category": "document", "parent": "Document"}, {"id": "PeriodicReport", "label": "정기공시(사업보고서 등)", "comment": "facts.py entry['doc_group'] == 'periodic'", "category": "document", "parent": "Document"}, {"id": "RatioStatement", "label": "재무비율(공시 명시값)", "comment": "derived.py validate()가 참조하는 statement=='ratio' 레코드 — 코퍼스에 명시된 비율값", "category": "document", "parent": "Statement"}, {"id": "SectorClass", "label": "업종(sector, 20종)", "comment": "sectors.py load()['sector'] — 반도체·전자부품, 자동차·모빌리티 등", "category": "entity", "parent": "Sector"}, {"id": "DerivedConcept", "label": "파생 개념(비율)", "comment": "choi/공시_agent/qa/derived.py RULES — 9개 파생비율(부채비율 등)", "category": "concept", "parent": "FinancialConcept"}, {"id": "Event", "label": "이벤트 공시", "comment": "qa/events_vocab.py event_types() — report_nm이 156종 이벤트유형 어휘에 매칭되는 문서(정기공시 제외). qa/eventspan.py가 이 문서의 접수일자를 시간축 기준점 삼아 전후 Fact를 대조한다.", "category": "event", "parent": "Document"}, {"id": "FiscalYear", "label": "회계연도", "comment": "facts.py Fact.base_year", "category": "fact", "parent": null}, {"id": "StructuredFact", "label": "비-XBRL 구조화 사실", "comment": "factx.jsonl 레코드 — field_key/doc_group/kind 보유", "category": "fact", "parent": "Fact"}, {"id": "Metric", "label": "정규 재무지표", "comment": "choi/code_chunkingandparsing/src/facts.py _ONTOLOGY(10) + ragrag/pipeline/facts.py _ONTOLOGY_EXT(21) = 31개 metric_key", "category": "concept", "parent": "FinancialConcept"}, {"id": "Scope", "label": "연결/별도 기준", "comment": "facts.py Fact.scope ('consolidated'/'separate') — owl:oneOf로 정확히 두 개체만 허용", "category": "fact", "parent": null}, {"id": "XBRLFact", "label": "XBRL 재무제표 사실", "comment": "facts.py extract_facts() 반환 레코드 — aclass_xbrl_code/fiscal_term/row_index/col_index/sign 보유", "category": "fact", "parent": "Fact"}, {"id": "FinancialConcept", "label": "재무 개념", "comment": "추상 최상위 — '수치/텍스트 질문의 대상이 될 수 있는 것'. 하위 4개 클래스로 세분.", "category": "concept", "parent": null}, {"id": "Period", "label": "회계기간", "comment": "facts.py Fact.period_start/period_end + qa/period.py 파싱 결과(기수 포함)", "category": "fact", "parent": null}, {"id": "AccountItem", "label": "계정과목(정규형)", "comment": "choi/공시_agent/qa/concepts.py ConceptIndex — canonical(label_norm), surfaces, corps, synonym_group", "category": "concept", "parent": "FinancialConcept"}, {"id": "Company", "label": "기업", "comment": "choi/code_chunkingandparsing/src/facts.py Fact.corp_code/corp_name", "category": "entity", "parent": null}, {"id": "Sector", "label": "업종/산업", "comment": "choi/공시_agent/qa/sectors.py sector(20종)/industry(8종) 인덱스", "category": "entity", "parent": null}, {"id": "StructuredField", "label": "비-XBRL 구조화 필드", "comment": "choi/공시_agent/qa/fields.py + data/field_ontology.json — 387개 (major/exchange/holding 문서군)", "category": "concept", "parent": "FinancialConcept"}, {"id": "Statement", "label": "재무제표", "comment": "choi/code_chunkingandparsing/src/facts.py Fact.statement 필드 + derived.py 'ratio' 의사-제표", "category": "document", "parent": null}, {"id": "DerivationRule", "label": "파생 공식(n항관계 reification)", "comment": "derived.py RULES 튜플(연산자·피연산자2개·단위·배수·검증대상metric_key)을 W3C n-ary relation 패턴으로 reify — OWL 객체속성 하나로는 표현 불가능한 n항관계이므로", "category": "rule", "parent": null}, {"id": "Document", "label": "공시문서", "comment": "choi/code_chunkingandparsing/src/facts.py Fact.rcept_no/doc_id, fields.py doctypes", "category": "document", "parent": null}, {"id": "Fact", "label": "사실(관측값)", "comment": "choi/code_chunkingandparsing/src/facts.py Fact 레코드 / structstore 구조화 fact 레코드", "category": "fact", "parent": null}], "edges": [{"source": "Fact", "target": "FinancialConcept", "label": "about"}, {"source": "Event", "target": "Period", "label": "anchorsPeriod"}, {"source": "Fact", "target": "Document", "label": "citedIn"}, {"source": "Document", "target": "Statement", "label": "contains"}, {"source": "Company", "target": "Document", "label": "filed"}, {"source": "Statement", "target": "AccountItem", "label": "hasItem"}, {"source": "DerivationRule", "target": "AccountItem", "label": "hasOperand1"}, {"source": "DerivationRule", "target": "AccountItem", "label": "hasOperand2"}, {"source": "Fact", "target": "Period", "label": "hasPeriod"}, {"source": "DerivedConcept", "target": "DerivationRule", "label": "hasRule"}, {"source": "Fact", "target": "Scope", "label": "hasScope"}, {"source": "Fact", "target": "FiscalYear", "label": "hasYear"}, {"source": "AccountItem", "target": "Metric", "label": "normalizesTo"}, {"source": "Fact", "target": "Company", "label": "of"}, {"source": "DerivationRule", "target": "Metric", "label": "validatesAgainstMetric"}, {"source": "Sector", "target": "Company", "label": "hasMember"}, {"source": "Document", "target": "Document", "label": "supersedes"}, {"source": "BalanceSheet", "target": "Statement", "label": "subClassOf", "hierarchy": true}, {"source": "CashFlowStatement", "target": "Statement", "label": "subClassOf", "hierarchy": true}, {"source": "EquityStatement", "target": "Statement", "label": "subClassOf", "hierarchy": true}, {"source": "ExchangeDisclosure", "target": "Document", "label": "subClassOf", "hierarchy": true}, {"source": "HoldingReport", "target": "Document", "label": "subClassOf", "hierarchy": true}, {"source": "IncomeStatement", "target": "Statement", "label": "subClassOf", "hierarchy": true}, {"source": "IndustryClass", "target": "Sector", "label": "subClassOf", "hierarchy": true}, {"source": "MajorMattersReport", "target": "Document", "label": "subClassOf", "hierarchy": true}, {"source": "PeriodicReport", "target": "Document", "label": "subClassOf", "hierarchy": true}, {"source": "RatioStatement", "target": "Statement", "label": "subClassOf", "hierarchy": true}, {"source": "SectorClass", "target": "Sector", "label": "subClassOf", "hierarchy": true}, {"source": "DerivedConcept", "target": "FinancialConcept", "label": "subClassOf", "hierarchy": true}, {"source": "Event", "target": "Document", "label": "subClassOf", "hierarchy": true}, {"source": "StructuredFact", "target": "Fact", "label": "subClassOf", "hierarchy": true}, {"source": "Metric", "target": "FinancialConcept", "label": "subClassOf", "hierarchy": true}, {"source": "XBRLFact", "target": "Fact", "label": "subClassOf", "hierarchy": true}, {"source": "AccountItem", "target": "FinancialConcept", "label": "subClassOf", "hierarchy": true}, {"source": "StructuredField", "target": "FinancialConcept", "label": "subClassOf", "hierarchy": true}], "categories": {"concept": "재무 개념", "entity": "기업/업종", "document": "문서/재무제표", "fact": "사실/차원", "rule": "파생 규칙", "event": "이벤트·정정"}};
+const NS = "http://www.w3.org/2000/svg";
+const W = () => document.getElementById('app').clientWidth;
+const H = () => document.getElementById('app').clientHeight;
+
+const nodes = DATA.nodes.map(n => Object.assign({}, n, {
+  x: (Math.random() - 0.5) * 400, y: (Math.random() - 0.5) * 400, vx: 0, vy: 0,
+}));
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+const edges = DATA.edges.filter(e => byId[e.source] && byId[e.target]);
+
+// ---- 물리 시뮬레이션 (D3 없이 직접 구현 — 노드 27개 규모라 O(n^2)로 충분) ----
+const REPEL = 2600, SPRING = 0.02, HIER_SPRING = 0.01, REST = 130, HIER_REST = 70,
+      CENTER = 0.012, DAMP = 0.82;
+
+function tick() {
+  for (const n of nodes) { n.fx = 0; n.fy = 0; }
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i], b = nodes[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let d2 = dx * dx + dy * dy || 0.01;
+      let d = Math.sqrt(d2);
+      let f = REPEL / d2;
+      dx /= d; dy /= d;
+      a.fx += dx * f; a.fy += dy * f;
+      b.fx -= dx * f; b.fy -= dy * f;
+    }
+  }
+  for (const e of edges) {
+    const a = byId[e.source], b = byId[e.target];
+    const rest = e.hierarchy ? HIER_REST : REST;
+    const k = e.hierarchy ? HIER_SPRING : SPRING;
+    let dx = b.x - a.x, dy = b.y - a.y;
+    let d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+    let f = (d - rest) * k;
+    dx /= d; dy /= d;
+    a.fx += dx * f; a.fy += dy * f;
+    b.fx -= dx * f; b.fy -= dy * f;
+  }
+  for (const n of nodes) {
+    if (n.pinned) continue;
+    n.fx -= n.x * CENTER; n.fy -= n.y * CENTER;
+    n.vx = (n.vx + n.fx) * DAMP; n.vy = (n.vy + n.fy) * DAMP;
+    n.x += n.vx; n.y += n.vy;
+  }
+}
+
+// ---- SVG 구성 ----
+const svg = document.getElementById('canvas');
+const g = document.createElementNS(NS, 'g');
+svg.appendChild(g);
+const edgeLayer = document.createElementNS(NS, 'g');
+const nodeLayer = document.createElementNS(NS, 'g');
+g.appendChild(edgeLayer); g.appendChild(nodeLayer);
+
+const edgeEls = edges.map(e => {
+  const grp = document.createElementNS(NS, 'g');
+  grp.setAttribute('class', 'edge' + (e.hierarchy ? ' hier-grp' : ''));
+  const line = document.createElementNS(NS, 'line');
+  if (e.hierarchy) line.setAttribute('class', 'hier');
+  const label = document.createElementNS(NS, 'text');
+  label.textContent = e.hierarchy ? '' : e.label;
+  grp.appendChild(line); grp.appendChild(label);
+  edgeLayer.appendChild(grp);
+  return { e, line, label };
+});
+
+const RADIUS = 16;
+const nodeEls = nodes.map(n => {
+  const grp = document.createElementNS(NS, 'g');
+  grp.setAttribute('class', 'node');
+  const circle = document.createElementNS(NS, 'circle');
+  circle.setAttribute('r', RADIUS);
+  circle.setAttribute('fill', `var(--cat-${n.category})`);
+  circle.setAttribute('fill-opacity', '0.85');
+  circle.setAttribute('stroke', `var(--cat-${n.category})`);
+  const text = document.createElementNS(NS, 'text');
+  text.textContent = n.label;
+  text.setAttribute('x', RADIUS + 5); text.setAttribute('y', 4);
+  grp.appendChild(circle); grp.appendChild(text);
+  nodeLayer.appendChild(grp);
+
+  grp.addEventListener('mouseenter', (ev) => showTooltip(n, ev));
+  grp.addEventListener('mousemove', (ev) => moveTooltip(ev));
+  grp.addEventListener('mouseleave', hideTooltip);
+  grp.addEventListener('click', (ev) => { ev.stopPropagation(); focusNode(n.id); });
+  grp.addEventListener('mousedown', (ev) => startDrag(ev, n));
+  return { n, grp, circle, text };
+});
+
+function render() {
+  for (const { e, line, label } of edgeEls) {
+    const a = byId[e.source], b = byId[e.target];
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    label.setAttribute('x', (a.x + b.x) / 2); label.setAttribute('y', (a.y + b.y) / 2);
+  }
+  for (const { n, grp } of nodeEls) {
+    grp.setAttribute('transform', `translate(${n.x},${n.y})`);
+  }
+}
+
+let running = true, frame = 0;
+function loop() {
+  if (running) {
+    tick();
+    render();
+    frame++;
+    if (frame > 260) running = false;   // 안정화되면 CPU 아끼려고 멈춘다 (드래그 시 재개)
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---- 범례 ----
+const legend = document.getElementById('legend');
+for (const [key, ko] of Object.entries(DATA.categories)) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<span class="dot" style="background:var(--cat-${key})"></span><span>${ko}</span>`;
+  legend.appendChild(row);
+}
+
+// ---- 툴팁 ----
+const tooltip = document.getElementById('tooltip');
+function showTooltip(n, ev) {
+  tooltip.innerHTML = `<div class="k">${n.label} <span class="c">(${n.id})</span></div><div class="c">${n.comment || ''}</div>`;
+  tooltip.style.opacity = '1';
+  moveTooltip(ev);
+}
+function moveTooltip(ev) {
+  tooltip.style.left = (ev.clientX + 14) + 'px';
+  tooltip.style.top = (ev.clientY + 14) + 'px';
+}
+function hideTooltip() { tooltip.style.opacity = '0'; }
+
+// ---- 클릭 하이라이트 ----
+let focused = null;
+function focusNode(id) {
+  focused = (focused === id) ? null : id;
+  const neighborIds = new Set([focused]);
+  for (const e of edges) {
+    if (e.source === focused) neighborIds.add(e.target);
+    if (e.target === focused) neighborIds.add(e.source);
+  }
+  for (const { n, grp } of nodeEls) {
+    grp.classList.toggle('dim', focused && !neighborIds.has(n.id));
+  }
+  for (const { e, line } of edgeEls) {
+    const active = e.source === focused || e.target === focused;
+    line.parentElement.classList.toggle('dim', focused && !active);
+  }
+}
+svg.addEventListener('click', () => focusNode(null));
+
+// ---- 드래그 ----
+let dragging = null, dragOffset = { x: 0, y: 0 };
+function toWorld(ev) {
+  const pt = svg.createSVGPoint();
+  pt.x = ev.clientX; pt.y = ev.clientY;
+  const ctm = g.getScreenCTM().inverse();
+  const p = pt.matrixTransform(ctm);
+  return { x: p.x, y: p.y };
+}
+function startDrag(ev, n) {
+  ev.stopPropagation();
+  dragging = n; n.pinned = true;
+  running = true; frame = 0;
+  const w = toWorld(ev);
+  dragOffset = { x: n.x - w.x, y: n.y - w.y };
+}
+window.addEventListener('mousemove', (ev) => {
+  if (dragging) {
+    const w = toWorld(ev);
+    dragging.x = w.x + dragOffset.x; dragging.y = w.y + dragOffset.y;
+    dragging.vx = 0; dragging.vy = 0;
+  } else if (panning) {
+    pan.x = ev.clientX - panStart.x; pan.y = ev.clientY - panStart.y;
+    applyTransform();
+  }
+});
+window.addEventListener('mouseup', () => {
+  if (dragging) { dragging.pinned = false; dragging = null; }
+  panning = false; svg.classList.remove('panning');
+});
+
+// ---- 줌/팬 ----
+let scale = 1, pan = { x: 0, y: 0 }, panning = false, panStart = { x: 0, y: 0 };
+function applyTransform() {
+  g.setAttribute('transform',
+    `translate(${W()/2 + pan.x},${H()/2 + pan.y}) scale(${scale})`);
+}
+applyTransform();
+svg.addEventListener('wheel', (ev) => {
+  ev.preventDefault();
+  const delta = ev.deltaY > 0 ? 0.9 : 1.1;
+  scale = Math.min(3, Math.max(0.25, scale * delta));
+  applyTransform();
+}, { passive: false });
+svg.addEventListener('mousedown', (ev) => {
+  if (ev.target === svg) {
+    panning = true; svg.classList.add('panning');
+    panStart = { x: ev.clientX - pan.x, y: ev.clientY - pan.y };
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  for (const n of nodes) {
+    n.x = (Math.random() - 0.5) * 400; n.y = (Math.random() - 0.5) * 400;
+    n.vx = 0; n.vy = 0; n.pinned = false;
+  }
+  running = true; frame = 0;
+});
+document.getElementById('btn-fit').addEventListener('click', () => {
+  scale = 1; pan = { x: 0, y: 0 }; applyTransform();
+});
+</script>
+</body>
+</html>
