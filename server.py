@@ -15,8 +15,12 @@ JSON에 그대로 실리도록 했다.
   GET  /docs    자동 생성된 API 명세서 + 브라우저 테스트
 """
 
+import json
+import threading
 import time
+import traceback
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +31,28 @@ from pydantic import BaseModel, Field
 from qa import evidence_pack, labelstore, pipeline, render
 
 _READY = {"ok": False, "facts": 0, "load_ms": 0}
+
+# [2026-09-05, 대회 API 안전망] pipeline.run() 주위에 예외 처리가 없었다 —
+# 우리가 못 본 문항 하나가 예외를 던지면 그 요청은 500으로 죽어 부분점수도
+# 못 받는다(대회 타임아웃 300초는 널널해 레이턴시는 문제 아니지만, 크래시는
+# 전혀 다른 문제다). 예외를 삼키지는 않는다 — 사용자에겐 안전한 S6로 보이게
+# 하되, 원인은 파일로 남겨 나중에 고칠 수 있게 한다.
+_ERROR_LOG = Path(__file__).resolve().parent / "data" / "server_errors.jsonl"
+_ERROR_ANSWER = "처리 중 오류가 발생해 답변을 생성하지 못했습니다"
+
+
+def _log_server_error(question, exc):
+    try:
+        _ERROR_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with _ERROR_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "ts": datetime.now().isoformat(timespec="seconds"),
+                "question": question,
+                "error": f"{type(exc).__name__}: {exc}",
+                "traceback": traceback.format_exc(),
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass  # 로깅 자체가 실패해도 사용자 응답 흐름은 막지 않는다
 
 
 @asynccontextmanager
@@ -184,8 +210,17 @@ def ask(req: AskRequest):
     서로 다른 상황이고 오류가 아니기 때문이다.
     """
     t0 = time.time()
-    r = pipeline.run(req.question, prev_question=req.prev_question,
-                     prev_slots=req.prev_slots)
+    try:
+        r = pipeline.run(req.question, prev_question=req.prev_question,
+                         prev_slots=req.prev_slots)
+    except Exception as e:                                    # noqa: BLE001
+        _log_server_error(req.question, e)
+        return AskResponse(
+            question=req.question, resolved_question=req.question,
+            state="S6", answer=_ERROR_ANSWER, evidence=[], confidence="",
+            table=None, slots=None, elapsed_ms=int((time.time() - t0) * 1000),
+            detail=None,
+        )
     return AskResponse(
         question=req.question, resolved_question=r.resolved_question or req.question,
         state=r.state, answer=render.summary_text(r),
@@ -247,6 +282,21 @@ def _think_trace(r):
     return "\n".join(lines)
 
 
+# [2026-09-05, 대회 멀티턴 대비] `/answer` 스키마엔 prev_question/prev_slots를
+# 실어 보낼 필드가 없다 — 대회 쪽이 세션을 명시적으로 넘길 방법 자체가 없다.
+# 그런데 문항이 "하나씩 sequential하게" 들어온다고 했고, 우리 골드셋에도
+# "그럼 부채총계는?" 같이 직전 문항에 이어지는 후속질문이 실제로 있다
+# (FIN-0124~0126) — 즉 대회 문항도 그런 후속질문을 섞어 낼 가능성이 있다.
+# /ask처럼 클라이언트가 매번 넘겨줄 수 없으니, 서버가 직전 성공턴(S0/S2)의
+# question·slots를 프로세스 전역에 들고 있다가 다음 호출에 자동으로 물려준다.
+# /ask에는 이 자동 승계를 넣지 않는다 — 거긴 호출자가 자기 대화의
+# prev_slots를 명시적으로 관리하므로, 전역 상태를 섞으면 동시 접속한
+# 서로 다른 대화끼리 맥락이 오염된다. /answer는 애초에 세션 개념이 없어
+# "직전 호출 = 같은 흐름"으로 가정하는 것 말고는 대안이 없다.
+_last_turn_lock = threading.Lock()
+_last_turn = {"question": None, "slots": None}
+
+
 @app.get("/answer", response_model=EvalAnswer, summary="평가용 API — 대회 지정 스키마",
          response_description="question_id·retrieved_context·think_trace·answer")
 def answer_eval(question_id: str, question: str):
@@ -256,7 +306,21 @@ def answer_eval(question_id: str, question: str):
     이름({question_id, question, retrieved_context, think_trace, answer})으로
     다시 포장할 뿐, 별도 파이프라인이 아니다.
     """
-    r = pipeline.run(question)
+    with _last_turn_lock:
+        prev_question, prev_slots = _last_turn["question"], _last_turn["slots"]
+    try:
+        r = pipeline.run(question, prev_question=prev_question, prev_slots=prev_slots)
+    except Exception as e:                                    # noqa: BLE001
+        _log_server_error(question, e)
+        return EvalAnswer(question_id=question_id, question=question,
+                          retrieved_context="", think_trace="", answer=_ERROR_ANSWER)
+    if r.state in ("S0", "S2"):
+        # 실패턴(S1/S3/S6)에서는 갱신하지 않는다 — pipeline.run()의 문서화된
+        # 계약과 동일하게, 실패턴의 slots는 승계 후보가 아니라 이전 성공턴을
+        # 계속 들고 있는 편이 낫다(/ask의 AskRequest.prev_slots 설명과 같은 이유).
+        with _last_turn_lock:
+            _last_turn["question"] = r.resolved_question or question
+            _last_turn["slots"] = _slots(r)
     return EvalAnswer(
         question_id=question_id, question=question,
         retrieved_context=_retrieved_context(r),

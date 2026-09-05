@@ -316,6 +316,11 @@ def stage02_retrieve_multi(p, store, labels):
 _WANT_ORIGINAL = re.compile(r"최초\s*(?:확정치|보고|공시|제출본|수치)|당시\s*(?:보고|기재)"
                             r"|당해\s*연도\s*보고서|원본\s*기준")
 
+# "각 사업보고서 기준" — 연도별로 그 해 자기 원본 보고서를 근거로 쓰라는
+# 명시적 신호. _run_series의 같은-문서 앵커링을 막는 데 쓴다(실측:
+# SEM-NUM-06/GOLD-W1-SEC-05).
+_EACH_OWN_REPORT_SIGNAL = re.compile(r"각\s*(?:사업보고서|보고서)\s*기준|각각의?\s*(?:사업보고서|보고서)")
+
 
 def _metric_lookup(labels, store, cc, metric, scope, year, statement=None,
                    prefer_latest=True):
@@ -1700,10 +1705,32 @@ def _run_series(r, p, store, labels):
         r.state = "S1"
         return _with_sections(r, p)
 
+    # [2026-09-05] 여러 연도를 비교할 땐 같은 보고서의 비교표시 열에서 함께
+    # 읽는다 — 연도마다 독립적으로 조회하면 오래된 연도가 최신 연도와 다른
+    # 문서(그 해 자기 원본 보고서)에서 값을 가져와, "OO년 사업보고서에
+    # 비교표시된 제N기 대비 제M기" 같은 질문의 gold와 어긋난다(perf.py의
+    # multi_metric_trend와 같은 원인, 실측: SEM-NUM-09 — 우리 -20.6% vs
+    # gold -15.04%, 같은 보고서 열이 아니라 각 연도 자기 원본에서 읽어
+    # 값이 갈렸다). 그 문서에 없는 연도(긴 range/recent_n의 앞쪽 연도 등)는
+    # 기존 방식(cross-document)으로 그대로 폴백한다 — 여러 연도를 요청했는데
+    # 한 문서에 다 없다고 결측 처리하면 안 된다.
+    #
+    # 단, "각 사업보고서 기준"류는 정반대를 명시적으로 요구한다 — 연도마다
+    # *자기 원본* 보고서를 근거로 쓰라는 뜻이라(실측: SEM-NUM-06/GOLD-W1-
+    # SEC-05 — 값은 같아도 근거 rcept가 그 해 자기 원본이어야 gold와 일치),
+    # 이 신호가 있으면 앵커링을 아예 시도하지 않는다.
+    anchor_rcept = None
+    if len(years) >= 2 and not _EACH_OWN_REPORT_SIGNAL.search(r.question or ""):
+        anchor_year = max(years)
+        anchor_f = _lookup_one(dict(p, year=anchor_year, scope=scope), p["corp_code"],
+                               store, labels, year=anchor_year, scope=scope)
+        anchor_rcept = anchor_f.get("rcept_no") if anchor_f else None
     got, missing = [], []
     for y in years:
         q = dict(p, year=y, scope=scope)
-        f = _lookup_one(q, p["corp_code"], store, labels, year=y, scope=scope)
+        f = _lookup_doc(q, labels, y, scope, doc_rcept=anchor_rcept) if anchor_rcept else None
+        if not f:
+            f = _lookup_one(q, p["corp_code"], store, labels, year=y, scope=scope)
         (got.append((y, f)) if f else missing.append(y))
     if not got:
         r.stage("02").status = "실패"
@@ -2709,6 +2736,155 @@ def _q_ambiguous_reask_enabled():
     return os.environ.get("Q_AMBIGUOUS_REASK_ENABLED", "").lower() in ("1", "true", "yes", "on")
 
 
+def _q_screening_enabled():
+    return os.environ.get("Q_SCREENING_ENABLED", "").lower() in ("1", "true", "yes", "on")
+
+
+def _q_scope_clarify_enabled():
+    return os.environ.get("Q_SCOPE_CLARIFY_ENABLED", "").lower() in ("1", "true", "yes", "on")
+
+
+def _q_growth_rank_enabled():
+    return os.environ.get("Q_GROWTH_RANK_ENABLED", "").lower() in ("1", "true", "yes", "on")
+
+
+# [2026-09-05, 사용자 요청 — aggregation 유형 개선] "부채비율이 300%를 넘는
+# 기업은 몇 곳이고 어디인가" — 특정 기업을 안 대고 코퍼스 전체를 임계값으로
+# 스크리닝하는 질문. ontology.py는 이미 concept/derived/year/scope를 전부
+# 정확히 잡지만(실측 확인), corps가 비어 있으면 "순위 질문인데 대상 기업을
+# 특정 못함"으로 unsupported 처리해 버린다(다중기업 비교·랭킹은 늘 명시
+# 기업이나 업종이 있다고 가정했었다) — "전체 코퍼스가 대상"이라는 경우를
+# 아예 다루지 않았다. qa/crosstab.py::screen()이 이미 만들어져 있었지만
+# 실제로는 어디서도 호출되지 않는 죽은 코드였다.
+_SCREEN_THRESHOLD = re.compile(
+    r"(\d+(?:\.\d+)?)\s*%\s*(?:를|을|가|이)?\s*"
+    r"(넘는|초과하는|초과한|이상인|이상의|이상|밑도는|미만인|미만의|미만|이하인|이하의|이하)")
+_SCREEN_ASK = re.compile(r"몇\s*(?:곳|개|군데)|어디")
+_SCREEN_OP = {
+    "넘는": "gt", "초과하는": "gt", "초과한": "gt",
+    "이상인": "ge", "이상의": "ge", "이상": "ge",
+    "밑도는": "lt", "미만인": "lt", "미만의": "lt", "미만": "lt",
+    "이하인": "le", "이하의": "le", "이하": "le",
+}
+_SCREEN_OP_KO = {"gt": "초과", "ge": "이상", "lt": "미만", "le": "이하"}
+_SCREEN_OP_FN = {
+    "gt": lambda v, t: v > t, "ge": lambda v, t: v >= t,
+    "lt": lambda v, t: v < t, "le": lambda v, t: v <= t,
+}
+
+
+def _run_screening(r, p, store, labels, threshold, op):
+    """코퍼스 전체(70개사)를 대상으로 임계값 스크리닝한다. concept/derived·
+    year·scope는 이미 ontology.py가 정확히 잡아 둔 것을 그대로 쓴다 —
+    여기서 새로 추론하지 않는다."""
+    concept = p.get("derived") or p.get("concept")
+    year, scope = p.get("year"), p.get("scope") or "consolidated"
+    ci = concepts.get(labels.facts)
+    fn = _SCREEN_OP_FN[op]
+    hits, checked = [], 0
+    for name in store.corp_names:
+        cc = store.corp_code.get(name)
+        if not cc:
+            continue
+        y, v, _f = _concept_value(cc, concept, scope, year, labels, ci)
+        if y is None:
+            continue
+        checked += 1
+        if fn(float(v), threshold):
+            hits.append((name, float(v)))
+    r.stage("01").status = "완료"
+    r.stage("01").note = (r.stage("01").note or "") + " · 전사 스크리닝(코퍼스 70개사)"
+    if checked == 0:
+        r.stage("02").status = "실패"
+        r.stage("02").note = "코퍼스 전체에서 이 지표를 조회하지 못함"
+        for no in ("03", "04", "05"):
+            r.stage(no).status = "건너뜀"
+        r.state = "S1"
+        return _with_sections(r, p)
+    for no in ("02", "03", "04", "05"):
+        r.stage(no).status = "완료"
+    r.stage("02").note = f"{checked}개사 조회 · {len(hits)}개사 조건 충족"
+    r.stage("04").note = "fact 값 그대로 인용/파생 계산 · 임계값 비교만"
+    hits.sort(key=lambda t: -t[1])
+    scope_ko = SCOPE_KO_ALL.get(scope, scope)
+    op_ko = _SCREEN_OP_KO[op]
+    year_ko = f"{year}년 " if year else ""
+    if hits:
+        listed = ", ".join(name for name, _v in hits)
+        r.answer_text = (f"{year_ko}{scope_ko} 기준 {concept}이(가) {threshold}%{op_ko}인 기업은 "
+                         f"{len(hits)}곳입니다 — {listed}.")
+    else:
+        r.answer_text = f"{year_ko}{scope_ko} 기준 {concept}이(가) {threshold}%{op_ko}인 기업이 없습니다."
+    r.numbers = [str(v) for _n, v in hits]
+    r.state = "S0"
+    return r
+
+
+def _exact_value(cc, concept, scope, y, labels, ci):
+    """_concept_value와 달리 연도를 다른 값으로 대체하지 않는다 — 증가율은 두
+    특정 연도 사이의 값이라, 한쪽을 최근값으로 슬쩍 바꾸면 증가율 자체가
+    허구가 된다. 그 해 값이 없으면 그냥 None."""
+    f = health._lookup_any(labels, ci, cc, concept, scope, y)
+    if f:
+        return health._num(f), f
+    if concept in derived.RULES:
+        _op, operands, _unit, _mult, _own = derived.RULES[concept]
+        facts = [health._lookup_any(labels, ci, cc, o, scope, y) for o in operands]
+        if all(fa is not None for fa in facts):
+            v = derived.compute(concept, [health._num(fa) for fa in facts])
+            if v is not None:
+                return v, None
+    return None, None
+
+
+def _run_growth_rank(r, p, store, labels):
+    """"2023회계연도 대비 2024회계연도에 자산총계 증가율이 가장 큰 기업은
+    어디인가" — 특정 기업 없이 코퍼스 전체(70개사)에서 두 연도 간 증가율의
+    극값을 찾는 질문. Q_SCREENING(임계값 필터)과 달리 필터가 아니라 계산 후
+    순위 1위 추출이다. 두 해 값이 모두 있는 기업만 비교 대상에 넣는다."""
+    concept = p.get("derived") or p.get("concept")
+    scope = p.get("scope") or "consolidated"
+    base_year, year = p.get("base_year"), p.get("year")
+    order = p.get("order") or "desc"
+    ci = concepts.get(labels.facts)
+    rows = []
+    for name in store.corp_names:
+        cc = store.corp_code.get(name)
+        if not cc:
+            continue
+        v0, f0 = _exact_value(cc, concept, scope, base_year, labels, ci)
+        v1, f1 = _exact_value(cc, concept, scope, year, labels, ci)
+        if v0 is None or v1 is None or v0 == 0:
+            continue
+        growth = float((v1 - v0) / v0 * 100)
+        rows.append((name, growth, v0, v1, f0, f1))
+    r.stage("01").status = "완료"
+    r.stage("01").note = (r.stage("01").note or "") + " · 전사 증가율 순위(코퍼스 70개사)"
+    if not rows:
+        r.stage("02").status = "실패"
+        r.stage("02").note = "두 연도 값이 모두 있는 기업이 없음"
+        for no in ("03", "04", "05"):
+            r.stage(no).status = "건너뜀"
+        r.state = "S1"
+        return _with_sections(r, p)
+    rows.sort(key=lambda t: t[1], reverse=(order == "desc"))
+    for no in ("02", "03", "04", "05"):
+        r.stage(no).status = "완료"
+    r.stage("02").note = f"{len(rows)}개사 비교 가능(두 연도 모두 값 있음)"
+    r.stage("04").note = "증감률 = (당기−전기)÷전기×100, 전 기업에 대해 계산 후 극값 선택"
+    scope_ko = SCOPE_KO_ALL.get(scope, scope)
+    order_ko = "큰" if order == "desc" else "작은"
+    name, growth, v0, v1, f0, f1 = rows[0]
+    r.answer_text = (f"{base_year}회계연도 대비 {year}회계연도 {scope_ko} 기준 {concept} 증가율이 "
+                     f"가장 {order_ko} 기업은 {name}입니다 (증가율 {growth:.1f}%: "
+                     f"{base_year} {v0:,.0f} → {year} {v1:,.0f}).")
+    r.numbers = [f"{growth:.1f}%"]
+    r.ranking = [nm for nm, *_ in rows]
+    r.evidence = [to_coordinate(f) for f in (f0, f1) if f]
+    r.state = "S0"
+    return r
+
+
 # [사용자 확정 스펙 2026-09-05] "경쟁사랑 비교" — 직전 기업의 업종 경쟁사로
 # 확장한다. Q_SECTOR_ISOLATION(P4)의 expanded_corps 규칙을 그대로 쓴다 —
 # 경쟁사는 사용자가 직접 댄 게 아니므로 corps엔 넣되 expanded_corps로
@@ -2808,9 +2984,18 @@ def _is_bare_reference(question, p):
 # 현재 표지가 과거 표지보다 우선한다(스펙엔 충돌 규칙이 없어 보수적으로
 # 정함) — "최근엔 어때?"처럼 현재 표지가 있으면 과거로 안 본다.
 _PAST_TENSE_SIGNAL = re.compile(
-    r"예전|과거|이전|그때|작년|재작년|\d+\s*년\s*전|했었|였어\s*\??$|어땠어\s*\??$"
+    r"예전|과거|이전|그때|\d+\s*년\s*전|했었|였어\s*\??$|어땠어\s*\??$"
 )
 _PRESENT_TENSE_SIGNAL = re.compile(r"지금|현재|최근|올해|요즘")
+# "작년"/"재작년"은 여기서 뺐다 — "예전에"/"과거에는"처럼 막연한 과거가 아니라
+# 특정 단일 연도를 가리키는 표현인데, 이 코퍼스엔 "지금(기준 연도)"이 정의돼
+# 있지 않아 그 연도가 몇 년인지 아무도 못 정한다(전체 시계열로 얼버무리는
+# 것도 부정확하다 — "작년"은 하나의 특정 연도를 뜻하는 말이니까). 그래서
+# 뒤(qa/pipeline.py::_run() "상대연도 모호" 분기)에서 별도로, 더 좁게(‘사업
+# 보고서’ 앵커가 없을 때만) S3 되묻기로 처리한다. 실측(FIN 골드셋): "가장
+# 최근 사업보고서 기준"류는 단일 확정값이 정답인데 단독 "재작년"/"작년"류는
+# CLARIFICATION_REQUIRED가 정답이었다 — 이 둘을 여기 한 정규식에 묶으면
+# 구분이 안 된다.
 
 
 def _past_tense_signal(question):
@@ -2891,6 +3076,35 @@ def _run_recommendation(r, p, store, labels):
 # qa/perf.py가 이미 계산한 최근 3개년 변화율을 재사용한다(qa/umbrella.py
 # 참고 — 새 계산 경로를 만들지 않는다).
 # ---------------------------------------------------------------------------
+def _concept_value(cc, concept, scope, year, labels, ci):
+    """개념 하나의 (연도, Decimal 값, 표시용 fact|None) — qa/derived.py와
+    같은 우선순위(corpus 명시값 우선, 없으면 파생 RULES에 있는 개념에 한해
+    계산). 표시용 fact가 있으면(원본 label 값) 호출부가 value_raw/unit_kr을
+    그대로 쓰고, None이면 파생 계산값(round는 호출부 몫)이다. 아무것도 없으면
+    (None, None, None).
+
+    year: 명시되면 그 연도만 보고, 그 연도에 값이 없으면(명시값·파생 계산
+    피연산자 어느 쪽도) 실패로 본다 — 없으면 가장 최근으로 폴백한다.
+    """
+    years = health._years_any(labels, ci, cc, concept, scope)
+    y = year if (year and year in years) else (max(years) if years else None)
+    f = health._lookup_any(labels, ci, cc, concept, scope, y) if y else None
+    if f:
+        return y, health._num(f), f
+    if concept in derived.RULES:
+        _op, operands, _unit, _mult, _own = derived.RULES[concept]
+        avail_common = health._latest_common_year(labels, ci, cc, operands, scope)
+        dy = year if (year and all(
+            year in health._years_any(labels, ci, cc, o, scope) for o in operands)) else avail_common
+        vals = ([health._num(health._lookup_any(labels, ci, cc, o, scope, dy)) for o in operands]
+                if dy else [])
+        if dy and all(v is not None for v in vals):
+            v = derived.compute(concept, vals)
+            if v is not None:
+                return dy, v, None
+    return None, None, None
+
+
 def _umbrella_plain_summary(corp, cc, concept_set, scope, labels, year=None):
     """qa/derived.py와 같은 우선순위를 지킨다 — corpus 명시값이 있으면
     그것을 쓰고, 없을 때만(부채비율 등 파생 RULES에 있는 개념에 한해) 계산한다.
@@ -2905,27 +3119,16 @@ def _umbrella_plain_summary(corp, cc, concept_set, scope, labels, year=None):
     ci = concepts.get(labels.facts)
     lines, hit = [], 0
     for concept in concept_set:
-        years = health._years_any(labels, ci, cc, concept, scope)
-        y = year if (year and year in years) else (max(years) if years else None)
-        f = health._lookup_any(labels, ci, cc, concept, scope, y) if y else None
-        if f:
-            hit += 1
-            lines.append(f"{concept} {f.get('value_raw', '')}{f.get('unit_kr', '')}({y}년)")
+        y, v, f = _concept_value(cc, concept, scope, year, labels, ci)
+        if y is None:
+            lines.append(f"{concept}: 미공시")
             continue
-        if concept in derived.RULES:
-            op, operands, unit, mult, _own = derived.RULES[concept]
-            avail_common = health._latest_common_year(labels, ci, cc, operands, scope)
-            dy = year if (year and all(
-                year in health._years_any(labels, ci, cc, o, scope) for o in operands)) else avail_common
-            vals = ([health._num(health._lookup_any(labels, ci, cc, o, scope, dy)) for o in operands]
-                    if dy else [])
-            if dy and all(v is not None for v in vals):
-                v = derived.compute(concept, vals)
-                if v is not None:
-                    hit += 1
-                    lines.append(f"{concept} {round(float(v), 1)}{unit}(파생, {dy}년)")
-                    continue
-        lines.append(f"{concept}: 미공시")
+        hit += 1
+        if f:
+            lines.append(f"{concept} {f.get('value_raw', '')}{f.get('unit_kr', '')}({y}년)")
+        else:
+            unit = derived.RULES[concept][2]
+            lines.append(f"{concept} {round(float(v), 1)}{unit}(파생, {y}년)")
     return lines, hit
 
 
@@ -3432,7 +3635,14 @@ def _run(question, store=None, labels=None, prev_question=None, prev_slots=None)
         if txt:
             return _run_contract(r, p, txt, ev, nums)
 
-    # 공시 건수 — fact가 아니라 문서를 센다.
+    # 공시 건수 — fact가 아니라 문서를 센다. [2026-09-05, 사용자 요청 — 시도
+    # 후 되돌림] 처음엔 S2로 냈으나(코퍼스 안에서 셀 수 있는 만큼일 뿐,
+    # 전체를 확보했다는 보장이 없어서 — 실측: GOLD-W1-SEC-04,
+    # gold=INSUFFICIENT_EVIDENCE), 채점기가 INSUFFICIENT_EVIDENCE를
+    # S1/S3/S6만 인정하고 S2는 인정하지 않아 목표 문항의 "정확"은 그대로
+    # 안 고쳐지면서 기존 건수 골드 5건의 "행동"만 ✅→🟡로 떨어뜨렸다(순손해,
+    # REPORT.md "마감 후" 항목 참고). state는 S0으로 되돌리고, docstats.run()의
+    # 캐비엇 문구(기권은 아니되 범위를 밝힘)만 남긴다.
     if docstats.wanted(question) and not _is_multi_compare:
         txt, ev, nums = docstats.run(question, p.get("corp"))
         if txt:
@@ -3622,6 +3832,29 @@ def _run(question, store=None, labels=None, prev_question=None, prev_slots=None)
     if events.wanted(question, p):
         return _run_events(r, p)
 
+    # [Q_SCREENING] "부채비율이 300%를 넘는 기업은 몇 곳이고 어디인가" —
+    # 특정 기업·업종 없이 코퍼스 전체를 임계값으로 스크리닝. p.get("unsupported")가
+    # 바로 이 케이스("순위 질문인데 대상 기업을 특정 못함")를 잡고 있어, 그
+    # S6 처리 직전에 가로챈다. concept/derived/year가 이미 확정돼 있어야
+    # 한다(ontology.py가 못 잡았으면 스크리닝도 대상이 불명확해 시도 안 함).
+    if (_q_screening_enabled() and p.get("unsupported") and not p.get("corps")
+            and (p.get("concept") or p.get("derived")) and p.get("year")
+            and _SCREEN_ASK.search(question)):
+        m = _SCREEN_THRESHOLD.search(question)
+        if m:
+            threshold, op = float(m.group(1)), _SCREEN_OP[m.group(2)]
+            return _run_screening(r, p, store, labels, threshold, op)
+
+    # [Q_GROWTH_RANK] "2023회계연도 대비 2024회계연도에 자산총계 증가율이
+    # 가장 큰 기업은 어디인가" — Q_SCREENING과 같은 이유(대상 기업 미특정 →
+    # unsupported)로 걸리지만, 필터가 아니라 "코퍼스 전체 계산 후 극값 1곳"이라
+    # 별도 함수로 처리한다. fact_compute(두 연도 비교) + 순위(topn/order)가
+    # 함께 온 경우로 구분한다.
+    if (_q_growth_rank_enabled() and p.get("unsupported") and not p.get("corps")
+            and p["intent"] == "fact_compute" and p.get("base_year") and p.get("year")
+            and (p.get("concept") or p.get("derived"))):
+        return _run_growth_rank(r, p, store, labels)
+
     if p.get("unsupported"):
         r.stage("01").status = "완료"
         r.stage("01").note = p["unsupported"]
@@ -3753,6 +3986,53 @@ def _run(question, store=None, labels=None, prev_question=None, prev_slots=None)
         per["kind"] = "all"
         return _run_series(r, p, store, labels)
 
+    # [2026-09-05, 사용자 요청 — clarification 유형 개선] "재작년"/"작년"/
+    # "최근"이 **"사업보고서" 없이 단독으로** 쓰이면 진짜 모호하다 — 몇 년도
+    # 기준인지 사람도 못 정한다("지금이 몇 년도인지" 자체가 이 코퍼스에
+    # 정의돼 있지 않다). "가장 최근 사업보고서 기준"처럼 명시적으로 앵커가
+    # 있으면(period.parse()가 kind="latest"로 정확히 잡는다, 아래
+    # explicit_latest) 모호하지 않으므로 그대로 최신연도로 푼다 — 실측(FIN
+    # 골드셋)으로 이 구분을 확인했다: "가장 최근 사업보고서 기준"류(FIN-0050~
+    # 0057)는 전부 단일 확정값이 정답인데, 단독 "재작년"/"작년"/"최근"류
+    # (FIN-0058~0065)는 전부 CLARIFICATION_REQUIRED가 정답이었다.
+    # derived(파생비율) 개념은 제외한다 — "영업이익률 흐름은 어때?"류가
+    # per.kind="all"(추이)인데 derived라서 바로 아래 "가장 최근" 폴백의
+    # `or p.get("derived")` 예외를 타고 연도만 채운 뒤 트렌드로 이어지는
+    # 기존 경로가 있다(실측 회귀: GOLD-W2B-P17 — 이 새 체크가 그 경로보다
+    # 먼저 걸려 트렌드 답변 대신 되묻기로 새 버렸다). plain 개념(비유동부채·
+    # 자산총계 등, derived.RULES에 없는 것)만 이 모호성 체크 대상이다.
+    _AMBIGUOUS_RELATIVE_YEAR = re.compile(r"최근|작년|재작년")
+    if (_q_recency_enabled() and not p.get("year") and not p.get("field") and not p.get("derived")
+            and per.get("kind") != "latest"
+            and per.get("kind") not in ("range", "recent_n", "all", "term")
+            and _AMBIGUOUS_RELATIVE_YEAR.search(question) and "보고서" not in question):
+        avail = available_years(p, labels)
+        r.stage("01").status = "실패"
+        r.stage("01").note = "상대연도 모호(사업보고서 앵커 없음) — 되물음"
+        for no in ("02", "03", "04", "05"):
+            r.stage(no).status = "건너뜀"
+        r.state, r.missing = "S3", ["연도"]
+        m = _AMBIGUOUS_RELATIVE_YEAR.search(question)
+        ref_note = ""
+        # 정말 몰라서 못 답하는 게 아니다 — "가장 최근 연도라면" 값을 참고로
+        # 같이 보여준다(그 값에 실제 근거 좌표도 붙인다). 단정은 안 한다 —
+        # state는 그대로 S3, 이 참고값을 "확정 답"이라고 부르지 않는다.
+        if avail:
+            p_ref = dict(p, year=max(avail))
+            try:
+                facts_ref = stage02_retrieve(p_ref, store, labels, question)
+            except Exception:                                  # noqa: BLE001
+                facts_ref = []
+            if facts_ref:
+                r.evidence = [to_coordinate(f) for f in facts_ref]
+                f0 = facts_ref[0]
+                ref_note = (f" 참고로 가장 최근({max(avail)}년) 사업보고서 기준으로는 "
+                           f"{f0.get('value_raw', '')}{f0.get('unit_kr', '')}입니다.")
+        r.answer_text = (f"'{m.group(0)}'이(가) 정확히 몇 년도를 말씀하시는지 알려주시면 "
+                         f"답변드리겠습니다" + (f" (보유 연도: {', '.join(map(str, sorted(avail)))})."
+                                              if avail else ".") + ref_note)
+        return r
+
     # "가장 최근" — 조회 조건이 실제로 가진 최신 연도로 푼다.
     # 연도를 아예 말하지 않은 질문도 여기서 같이 처리한다 — 예전엔 그런 질문을
     # missing_fields가 막아 세워 "몇 년도요?"라고 되물었다. 이제는 최신 연도로
@@ -3835,6 +4115,30 @@ def _run(question, store=None, labels=None, prev_question=None, prev_slots=None)
                           + (f" · 미확보 {len(r.unresolved)}개 기업" if r.unresolved else ""))
     r.evidence = [to_coordinate(f) for f in facts]
     r.facts = facts
+
+    # [2026-09-05, 시도했으나 미승인 — 기본 OFF로 둔다] 연도 모호성
+    # (Q_RECENCY)과 같은 이유로, 연결/별도를 밝히지 않았는데 두 값이 서로
+    # 다르면 "구분이 필요합니다"라고 자신 있게 확정 답변하지 않고 먼저
+    # 되묻자는 시도. FIN-0045/0047/0049/0133/0137(골드
+    # CLARIFICATION_REQUIRED, 5건)은 고쳤지만, 실측 결과 FIN-0096~0101 +
+    # FIN-0123(7건)은 정확히 같은 "스코프 미명시·두 값이 다름" 모양인데
+    # 골드가 {consolidated:X, separate:Y} 형태의 확정 dual-value 답을
+    # 기대해서 오히려 회귀가 났다 — 질문 문장만 봐서는 이 두 유형을 구분할
+    # 신호가 없다(값의 상대적 차이 크기로도 안 갈린다: FIN-0049는 두 값이
+    # 2%밖에 안 다른데도 CLARIFICATION_REQUIRED). 순회귀(-2, 5건 개선 vs
+    # 7건 악화)라 골드셋 신호가 더 명확해지기 전까진 켜지 않는다.
+    if (_q_scope_clarify_enabled() and not multi and not p.get("scope")
+            and p["intent"] not in ("fact_compute",) and len(facts) == 2
+            and {f["scope"] for f in facts} == {"consolidated", "separate"}):
+        v0, v1 = to_won(facts[0]), to_won(facts[1])
+        if v0 is not None and v1 is not None and v0 != v1:
+            label = p.get("label") or ontology.concept_ko(p)
+            parts = [f"{SCOPE_KO_ALL.get(f['scope'], '')} {f['value_raw']}{f['unit_kr']}"
+                     for f in facts]
+            r.state, r.missing = "S3", ["연결/별도"]
+            r.answer_text = (f"{p['corp']}의 {p['year']}년 {label}은 연결/별도 기준에 따라 다릅니다"
+                             f" ({' / '.join(parts)}). 어느 기준으로 답변드릴까요?")
+            return _with_sections(r, p)
 
     # [03] ↔ [04] 피드백 루프
     verification = {}

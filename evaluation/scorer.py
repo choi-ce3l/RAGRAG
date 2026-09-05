@@ -423,7 +423,20 @@ def _score_typed(rec, result):
         if not nums and not strs:
             return None
         body = _SPACE.sub("", text)
-        miss_s = [x for x in strs if x not in body]
+        # [2026-09-05] "2023 사업연도(제55기)"처럼 회계연도 문자열은 흔히
+        # "연도 + 기수 괄호"로 저작된다. 우리 답변은 내용은 맞아도 "2023년"
+        # 처럼 연도만 말하지 "(제55기)" 같은 기수 표기는 안 쓴다(실측:
+        # GOLD-W1-SEC-05 — 값·근거 다 맞는데 이 리터럴만 안 걸려 ❌). 문자열
+        # 전체 일치가 실패하면, 그 문자열이 "YYYY년"/"YYYY 사업연도"로
+        # 시작할 때만 "YYYY년"이 답변에 있는지로 한 번 더 봐준다 — 이 대체
+        # 판정은 그 좁은 모양일 때만 적용되어, 값이 실제로 다른 답은 여전히
+        # ❌로 남는다(느슨해진 게 아니라 표기 차이만 흡수).
+        def _str_ok(x):
+            if x in body:
+                return True
+            m = re.match(r"(\d{4})(?:년|사업연도)", x)
+            return bool(m and f"{m.group(1)}년" in body)
+        miss_s = [x for x in strs if not _str_ok(x)]
         if nums and not _has_all(nums, result):
             return "❌", f"정답 수치 {len(nums)}개 중 일부가 답변에 없음"
         if miss_s:

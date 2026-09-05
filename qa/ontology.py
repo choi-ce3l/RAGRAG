@@ -190,6 +190,10 @@ def find_year(q):
     return None
 
 
+# 기업명 사이에 이것만 있으면 "그 사이 신호로 앞 기업이 취소됐다"로 본다.
+_CORP_CORRECTION_GAP = re.compile(r"\s*(?:아니라고|아니라서|아니라|아니고|그게\s*아니라|아니)\s*")
+
+
 def find_corps(q, store):
     """질문에 등장하는 기업을 전부 찾는다 (긴 이름 우선), **질문에 나온 순서대로**.
 
@@ -238,7 +242,22 @@ def find_corps(q, store):
         if head in q and real not in found:
             found.append(real)
     # 같은 길이끼리의 불안정한 순서를 질문 내 위치로 덮는다.
-    return sorted(found, key=lambda n: (q.find(n) if n in q else len(q), -len(n), n))
+    found = sorted(found, key=lambda n: (q.find(n) if n in q else len(q), -len(n), n))
+    # [2026-09-05] "카카오 아니 LG씨엔에스 23년 부채비율" — 대화가 아니라
+    # 한 문장 안에서 스스로 정정한 경우다. 신호(아니/아니라/아니고/그게
+    # 아니라) 바로 뒤에 곧장 다른 기업명이 오면, 신호 앞 기업은 취소된
+    # 것으로 보고 뺀다 — 신호와 다음 기업명 "사이"에 그 신호 말고 다른
+    # 말이 없을 때만(인접) 발동한다. "아니"가 워낙 흔한 말이라 느슨하게
+    # 잡으면 무관한 문장까지 오염시킨다(실측: FIN-0122).
+    i = 0
+    while i < len(found) - 1:
+        a, b = found[i], found[i + 1]
+        pa, pb = q.find(a), q.find(b)
+        if pa != -1 and pb != -1 and pa < pb and _CORP_CORRECTION_GAP.fullmatch(q[pa + len(a):pb]):
+            found.pop(i)
+            continue
+        i += 1
+    return found
 
 
 _HEADS = None

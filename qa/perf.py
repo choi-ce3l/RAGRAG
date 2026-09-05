@@ -95,6 +95,35 @@ def _series(store, corp_code, metric, scope="consolidated"):
     return out
 
 
+def _series_in_doc(store, doc_id, metric, scope="consolidated", span_years=()):
+    """[2026-09-05] 지정된 한 보고서 안에서만 연도별 값을 읽는다.
+
+    _series()는 연도마다 독립적으로 store.lookup()을 불러, 예전 연도는(정정이
+    없어도) "그 해 자기 원본 보고서"에서 값을 가져온다 — 최신 보고서 하나의
+    3개년 비교열을 그대로 읽는 gold 방식과 어긋난다(실측: GOLD-W2B-P13
+    삼성SDI 2023년 매출 — 우리 22.7조 vs gold 21.4조. 2024·2025년은 최신
+    보고서와 겹쳐 우연히 일치했을 뿐이다). numqa.FactStore.lookup_in_doc()이
+    정확히 이 용도로 이미 있었다("증가율의 전기값은 당기 fact와 같은
+    보고서에서") — 그대로 쓴다.
+
+    net_income은 회사에 따라 income_statement가 아니라 cashflow(포괄손익
+    계산서 대신 현금흐름표 쪽에 실린 회사, 실측: NC)에 걸려 있어 기본
+    statement로 못 찾을 수 있다 — 그때만 cashflow로 재시도한다(회사 전체
+    데이터를 새로 인덱싱하지 않고 이 자리에서만 보정).
+    """
+    out = {}
+    for y in span_years:
+        f = store.lookup_in_doc(doc_id, metric, scope, y)
+        if not f and metric == "net_income":
+            f = store.lookup_in_doc(doc_id, metric, scope, y, statement="cashflow")
+        if f:
+            try:
+                out[y] = Decimal(f["value_decimal"]) * Decimal(f.get("scale") or 1)
+            except (InvalidOperation, ValueError, TypeError):
+                pass
+    return out
+
+
 def _pct(a, b):
     if a is None or b is None or a == 0:
         return None
@@ -102,8 +131,23 @@ def _pct(a, b):
 
 
 def summarize(store, corp, corp_code, scope="consolidated"):
-    """(요약 dict | None). 숫자는 전부 fact에서 나온다."""
-    ser = {k: _series(store, corp_code, k, scope) for k, _ in METRICS}
+    """(요약 dict | None). 숫자는 전부 fact에서 나온다.
+
+    [2026-09-05] 3개년 값을 전부 "같은 한 보고서"(최신 매출액 fact가 실린
+    문서)에서 읽는다 — _series_in_doc() 참고. 어느 연도가 최신인지만 cross-doc
+    조회(_series)로 정하고, 실제 값은 그 문서 하나로 고정해 연도 간 정합을
+    맞춘다.
+    """
+    latest_rev = _series(store, corp_code, "revenue", scope)
+    if not latest_rev:
+        return None
+    anchor_year = max(latest_rev)
+    anchor = store.lookup(corp_code, "revenue", scope, anchor_year)
+    if not anchor:
+        return None
+    doc_id = anchor["doc_id"]
+    span_years = range(anchor_year - SPAN + 1, anchor_year + 1)
+    ser = {k: _series_in_doc(store, doc_id, k, scope, span_years) for k, _ in METRICS}
     years = sorted(set(ser["revenue"]) & set(ser["operating_income"]))
     if len(years) < 2:
         return None

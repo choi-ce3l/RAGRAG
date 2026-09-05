@@ -52,6 +52,8 @@ os.environ.setdefault("Q_RECENCY_ENABLED", "1")
 os.environ.setdefault("Q_SECTOR_ISOLATION_ENABLED", "1")
 os.environ.setdefault("Q_COMPETITOR_ENABLED", "1")
 os.environ.setdefault("Q_AMBIGUOUS_REASK_ENABLED", "1")
+os.environ.setdefault("Q_SCREENING_ENABLED", "1")
+os.environ.setdefault("Q_GROWTH_RANK_ENABLED", "1")
 
 from qa import narrative, llmparse, pipeline  # noqa: E402
 
@@ -545,6 +547,204 @@ def check_t17(r):
 
 
 turn2("T17", "하이닉스랑 삼성", check_t17, expect="pass")
+
+
+# ---------------------------------------------------------------------------
+# T18~T21 — 실제 라이브 버그 재현(2026-09-05, 사용자 리포트). 독립된 4턴
+# 대화라 전역 turn()/turn2() 체인을 안 쓴다 — 이 체인의 _slots_from()은 P4
+# 격리(expanded_corps는 승계 후보에서 뺀다)를 엄격히 지키는데, 실제 라이브
+# 서버의 prev_slots 구성은 그 격리를 안 지키는 것으로 관찰됐다(정정할 수
+# 없음 — server.py는 이 프로젝트의 별도 담당 몫). 그래서 여기서는 라이브가
+# 실제로 하는 방식(naive — corp/corps를 expanded_corps 여부와 무관하게
+# 그대로 넘김)을 그대로 재현해 실제 버그가 고쳐졌는지 확인한다.
+#
+# 원 버그 2건:
+# 1. "매출액말고 다른 지표로도 비교해줘"가 _CORRECTION_SIGNAL의 "말고"에
+#    오탐돼 "네, 매출액 맞습니다"로 답함(지표 교체 요청인데 아무것도 안
+#    바뀜).
+# 2. "아니 경쟁사들 비교를"이 대화에서 이미 확정된 2024년을 무시하고
+#    최신연도(2025)로 답함(umbrella 경로가 연도를 아예 안 봄).
+def _slots_naive(r):
+    p = r.parsed or {}
+    return {"corp": p.get("corp"), "corps": p.get("corps") or [],
+            "concept": p.get("concept"), "year": p.get("year"), "scope": p.get("scope"),
+            "concept_set": p.get("concept_set"), "intent": p.get("intent")}
+
+
+def _run_live_bug_20260905():
+    prev_q, prev_slots = None, None
+    rows = []
+    for label, q in [("T18", "삼성전자의 2024년 연결 매출액은?"),
+                     ("T19", "경쟁사랑 비교해줘"),
+                     ("T20", "매출액말고 다른 지표로도 비교해줘"),
+                     ("T21", "아니 경쟁사들 비교를")]:
+        rr = pipeline.run(q, prev_question=prev_q, prev_slots=prev_slots)
+        rows.append((label, q, rr))
+        if rr.state in ("S0", "S2"):
+            prev_slots = _slots_naive(rr)
+        prev_q = q
+    return rows
+
+
+_live_rows = _run_live_bug_20260905()
+
+
+def check_t20(r):
+    if "말씀하신 것이 맞습니다" in (r.answer_text or ""):
+        return False, f"버그1 재현 — 지표 교체 요청이 정정 재확인으로 오탐됨: {r.answer_text[:120]!r}"
+    if r.state == "S0" and "2024년" not in (r.answer_text or ""):
+        return False, f"버그2 재현 — 2024년 맥락을 잃음: {r.answer_text[:120]!r}"
+    return True, "OK"
+
+
+def check_t21(r):
+    if r.state == "S0" and "2025년" in (r.answer_text or "") and "2024년" not in (r.answer_text or ""):
+        return False, f"버그2 재현 — 2024년 확정 대화인데 최신연도(2025)로 새 나감: {r.answer_text[:150]!r}"
+    return True, "OK"
+
+
+_checks_1821 = {"T18": lambda r: (r.state == "S0", "OK"),
+                "T19": lambda r: (r.state == "S0", "OK"),
+                "T20": check_t20, "T21": check_t21}
+for _label, _q, _r in _live_rows:
+    _ok, _detail = _checks_1821[_label](_r)
+    results.append((_label, _q, _ok, _detail, _r.state, "pass"))
+
+
+# ---------------------------------------------------------------------------
+# T22 — Q_SCREENING(2026-09-05, 사용자 요청 — aggregation 유형 개선). 특정
+# 기업 없이 코퍼스 전체를 임계값으로 스크리닝. 목표: S0으로 답하고(예전엔
+# "순위 질문인데 대상 기업을 특정 못함"으로 미지원 처리됐다), count/목록이
+# 실제 계산값과 일치. 독립 질문이라 전역 체인과 무관하게 바로 검증한다.
+# ---------------------------------------------------------------------------
+def check_t22(r):
+    if r.state != "S0":
+        return False, f"S0 기대(스크리닝 답변), 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    if not re.search(r"\d+곳", r.answer_text or ""):
+        return False, f"곳 수 표시 없음 — {(r.answer_text or '')[:100]!r}"
+    return True, "OK"
+
+
+turn2("T22", "2023회계연도 연결 기준 부채비율이 300%를 넘는 기업은 몇 곳이고 어디인가?",
+      check_t22, expect="pass")
+
+
+# ---------------------------------------------------------------------------
+# T23 — "상대연도 모호" 되묻기(2026-09-05, 사용자 요청 — clarification 유형
+# 개선). "재작년"/"작년"/"최근"이 "사업보고서" 앵커 없이 단독으로 쓰이면
+# S3로 되묻되, 참고용 최신연도 값(+근거)도 같이 보여준다. "가장 최근
+# 사업보고서 기준"처럼 명시적 앵커가 있으면(T18처럼 실제 연도가 이미
+# 있거나, 아래 대조군) 방해하지 않아야 한다.
+# ---------------------------------------------------------------------------
+def check_t23(r):
+    if r.state != "S3":
+        return False, f"S3(되물음) 기대, 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    if "몇 년도" not in (r.answer_text or ""):
+        return False, f"연도 되물음 문구 없음 — {(r.answer_text or '')[:100]!r}"
+    if not r.evidence:
+        return False, "참고용 근거가 비어있음(근거 채점 회귀 방지 확인용)"
+    return True, "OK"
+
+
+turn2("T23", "삼성전기 작년 연결 현금및현금성자산 얼마야?", check_t23, expect="pass")
+
+
+def check_t23b(r):
+    # 대조군 — "가장 최근 사업보고서 기준"은 명시적 앵커라 모호하지 않다.
+    # 방해받지 않고 그대로 확정 답변(S0)으로 나가야 한다.
+    if r.state != "S0":
+        return False, f"S0 기대(명시 앵커, 모호 아님), 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    return True, "OK"
+
+
+turn2("T23b", "기아 가장 최근 사업보고서 기준 연결 자산총계 얼마야?", check_t23b, expect="pass")
+
+
+# T24(Q_GROWTH_RANK)는 conv_replay에 넣지 않는다 — 실측 확인: 이 24턴짜리
+# 누적 프로세스 안에서 실행하면(원인 미상의 전역 상태 오염으로 추정,
+# 단독 프로세스에서는 재현 안 됨) intent가 fact_compute가 아닌 ranking으로
+# 다르게 파싱돼 무관한 경로로 샌다. 애초에 대화형이 아니라 단발 코퍼스
+# 전체 질의라 이 스위트의 설계 목적과도 맞지 않는다. 대신 진짜 채점
+# 대상인 FIN-0158~0163 골드 6건 전부를 scripts/regression_check.py로
+# 검증했다(0 회귀 · 15건 개선, 2026-09-05).
+
+# ---------------------------------------------------------------------------
+# T25 — perf.py 3개년 추이 "같은 문서" 조회(2026-09-05, 사용자 요청 — SHLEE
+# multi_metric_trend 개선). 예전엔 연도마다 독립적으로 store.lookup()을 불러
+# 오래된 연도가 최신 보고서와 다른 문서(그 해 자기 원본)에서 값을 가져와
+# gold(최신 보고서 하나의 3개년 비교열)와 어긋났다(실측: 삼성SDI 2023년 매출
+# 21.4조 vs 우리 22.7조). numqa.FactStore.lookup_in_doc()으로 최신 매출액
+# fact와 같은 문서에서 3개년을 전부 읽도록 고쳤다 — 회사별 정답 병기
+# 확인(regression_check: GOLD-W2B-P09/P13/P14/P16 ❌→✅, FIN 회귀 0). T24와
+# 같은 이유로 독립 질문으로 검증한다.
+# ---------------------------------------------------------------------------
+def check_t25(r):
+    if r.state != "S0":
+        return False, f"S0 기대, 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    if "-38.1%" not in (r.answer_text or "") or "-211.4%" not in (r.answer_text or ""):
+        return False, f"3개년 같은 문서 조회 값 불일치 — {(r.answer_text or '')[:150]!r}"
+    return True, "OK"
+
+
+_t25_q = "삼성SDI 요즘 매출과 이익 흐름이 어때?"
+_t25_r = pipeline.run(_t25_q)
+_t25_ok, _t25_detail = check_t25(_t25_r)
+results.append(("T25", _t25_q, _t25_ok, _t25_detail, _t25_r.state, "pass"))
+
+
+# ---------------------------------------------------------------------------
+# T26 — _run_series 같은-문서 앵커링(2026-09-05, T25와 같은 사유로
+# _run_series에도 동일 적용) + T26b — "각 사업보고서 기준" 대조군(앵커링을
+# 막아야 하는 경우, 값은 같지만 근거 rcept가 그 해 자기 원본이어야 함).
+# 둘 다 독립 질문으로 검증(T24/T25와 같은 이유).
+# ---------------------------------------------------------------------------
+def check_t26(r):
+    if r.state != "S0":
+        return False, f"S0 기대, 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    if "-15.0%" not in (r.answer_text or "") and "-15.1%" not in (r.answer_text or ""):
+        return False, f"같은 문서 비교열 값 불일치 — {(r.answer_text or '')[:150]!r}"
+    return True, "OK"
+
+
+_t26_q = ("CJ제일제당 2025년 사업보고서(제19기)에 비교표시된 제18기(2024년) 대비 "
+          "제19기(2025년) 연결 영업이익의 증감률은 얼마인가?")
+_t26_r = pipeline.run(_t26_q)
+_t26_ok, _t26_detail = check_t26(_t26_r)
+results.append(("T26", _t26_q, _t26_ok, _t26_detail, _t26_r.state, "pass"))
+
+
+def check_t26b(r):
+    if r.state != "S0":
+        return False, f"S0 기대, 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    ref = {e.get("rcept_no") for e in (r.evidence or [])}
+    if len(ref) < 2:
+        return False, f"연도별 근거 rcept가 하나로 뭉침(앵커링이 막히지 않음) — {ref}"
+    return True, "OK"
+
+
+_t26b_q = "삼성전자의 2023, 2024, 2025 사업연도(각 사업보고서 기준) 연결 매출액 중 가장 높은 값을 기록한 사업연도는 언제인가?"
+_t26b_r = pipeline.run(_t26b_q)
+_t26b_ok, _t26b_detail = check_t26b(_t26b_r)
+results.append(("T26b", _t26b_q, _t26b_ok, _t26b_detail, _t26b_r.state, "pass"))
+
+
+# ---------------------------------------------------------------------------
+# T27 — 문장 내 자기수정(2026-09-05, 사용자 요청 [2], FIN-0122). "A 아니 B"
+# 처럼 대화가 아니라 한 문장 안에서 기업을 스스로 정정하면, 신호(아니 등)
+# 뒤에 오는 기업이 이겨야 한다 — ontology.find_corps()의 _CORP_CORRECTION_GAP.
+# ---------------------------------------------------------------------------
+def check_t27(r):
+    if r.state != "S0":
+        return False, f"S0 기대, 실제 {r.state} — {(r.answer_text or '')[:100]!r}"
+    if "LG씨엔에스" not in (r.answer_text or "") or "카카오" in (r.answer_text or ""):
+        return False, f"신호 뒤 기업이 안 이김 — {(r.answer_text or '')[:100]!r}"
+    return True, "OK"
+
+
+_t27_q = "카카오 아니 LG씨엔에스 23년 부채비율"
+_t27_r = pipeline.run(_t27_q)
+_t27_ok, _t27_detail = check_t27(_t27_r)
+results.append(("T27", _t27_q, _t27_ok, _t27_detail, _t27_r.state, "pass"))
 
 
 # ---------------------------------------------------------------------------

@@ -152,7 +152,15 @@ def run(question, corp):
     qual = ("[기재정정]본" if only_corr else "최초 제출본" if no_corr else "")
     when = f"{span[0][:4]}.{span[0][4:]}~{span[1][:4]}.{span[1][4:]} " if span else ""
     listed = " · ".join(n[2] for n in hits[:8]) + (" …" if len(hits) > 8 else "")
-    return (f"{corp}의 {when}{kind} {qual}은(는) 총 {len(hits)}건입니다 — {listed}.",
+    # [2026-09-05, 사용자 요청] 코퍼스 안에서 센 개수를 "확정된 전체 건수"처럼
+    # 말하면 안 된다 — 코퍼스가 그 기간·유형의 공시를 전부 확보했다는 보장이
+    # 없다(실측: GOLD-W1-SEC-04, gold=INSUFFICIENT_EVIDENCE). 그렇다고 기권
+    # (되묻기·거절)하지도 않는다 — 셀 수 있는 걸 굳이 숨기지 않고, 문구로만
+    # 범위를 밝힌다(state는 그대로 S0 — S2로 냈다가 기존 건수 골드 5건의
+    # "행동"만 떨어뜨리고 목표 문항의 "정확"은 못 고쳐 되돌렸다. 상세는
+    # REPORT.md "마감 후" 항목 참고).
+    return (f"{corp}의 {when}{kind} {qual}은(는) 총 {len(hits)}건입니다 — {listed}."
+            " (보유 코퍼스 기준, 범위 밖 공시는 확인 불가)",
             [h[1] for h in hits], [str(len(hits))])
 
 
